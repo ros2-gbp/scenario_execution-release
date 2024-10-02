@@ -24,3 +24,4 @@ scenario_execution_ros
 scenario_execution_control
 scenario_execution_rviz
 scenario_coverage
+scenario_execution_os
