@@ -9,6 +9,9 @@ scenario_execution_pybullet
 gazebo_static_camera
 gazebo_tf_publisher
 tb4_sim_scenario
+tf_to_pose_publisher
+scenario_status
+message_modification
 scenario_execution_gazebo_test
 scenario_execution_nav2_test
 scenario_execution_ros_test
