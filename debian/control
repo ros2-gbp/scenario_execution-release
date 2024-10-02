@@ -1,0 +1,12 @@
+Source: ros-humble-scenario-execution-control
+Section: misc
+Priority: optional
+Maintainer: Intel Labs <scenario-execution@intel.com>
+Build-Depends: debhelper (>= 9.0.0), ros-humble-rclpy, ros-humble-ros-workspace, python3-all, python3-setuptools, dh-python
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-humble-scenario-execution-control
+Architecture: any
+Depends: ${python3:Depends}, ${misc:Depends}, ros-humble-rclpy, ros-humble-scenario-execution, ros-humble-scenario-execution-interfaces, ros-humble-std-srvs, ros-humble-ros-workspace
+Description: Scenario Execution Control
