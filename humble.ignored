@@ -16,3 +16,7 @@ scenario_execution_gazebo_test
 scenario_execution_nav2_test
 scenario_execution_ros_test
 scenario_execution_test
+scenario_execution_nav2
+scenario_execution_py_trees_ros
+scenario_execution_gazebo
+scenario_execution_x11
