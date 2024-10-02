@@ -20,3 +20,7 @@ scenario_execution_nav2
 scenario_execution_py_trees_ros
 scenario_execution_gazebo
 scenario_execution_x11
+scenario_execution_ros
+scenario_execution_control
+scenario_execution_rviz
+scenario_coverage
