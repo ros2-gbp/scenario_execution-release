@@ -36,7 +36,7 @@ tracks:
     patches: null
     release_inc: '1'
     release_repo_url: null
-    release_tag: :{version}
+    release_tag: jazzy-:{version}
     ros_distro: jazzy
     vcs_type: git
     vcs_uri: https://github.com/IntelLabs/scenario_execution.git
