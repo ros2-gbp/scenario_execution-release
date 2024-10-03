@@ -1,0 +1,12 @@
+Source: ros-jazzy-scenario-execution-x11
+Section: misc
+Priority: optional
+Maintainer: Intel Labs <scenario-execution@intel.com>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-scenario-execution, ros-jazzy-ros-workspace, python3-all, python3-setuptools, dh-python
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-scenario-execution-x11
+Architecture: any
+Depends: ${python3:Depends}, ${misc:Depends}, ffmpeg, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, ros-jazzy-scenario-execution, ros-jazzy-ros-workspace
+Description: Scenario Execution library for X11
