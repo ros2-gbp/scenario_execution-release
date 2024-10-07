@@ -22,8 +22,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2_msgs REQUIRED)
 
 # gazebo
-find_package(gz_transport_vendor REQUIRED)
-find_package(gz-transport REQUIRED)
+find_package(ignition-transport11 REQUIRED)
 
 add_executable(gazebo_tf_publisher_node src/gazebo_tf_publisher_node.cpp)
 
@@ -31,10 +30,7 @@ ament_target_dependencies(gazebo_tf_publisher_node
   rclcpp
   geometry_msgs
   tf2_msgs
-)
-
-target_link_libraries(gazebo_tf_publisher_node
-  gz-transport::core
+  ignition-transport11
 )
 
 install(DIRECTORY 

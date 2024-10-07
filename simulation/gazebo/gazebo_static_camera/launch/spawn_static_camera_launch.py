@@ -66,12 +66,12 @@ def generate_launch_description():
              '/model/', camera_name,
              '/link/link/sensor/camera/image' +
              '@sensor_msgs/msg/Image' +
-             '[gz.msgs.Image'],
+             '[ignition.msgs.Image'],
             ['/world/', world_name,
              '/model/', camera_name,
              '/link/link/sensor/camera/camera_info' +
              '@sensor_msgs/msg/CameraInfo' +
-             '[gz.msgs.CameraInfo'],
+             '[ignition.msgs.CameraInfo'],
         ],
         remappings=[
             (['/world/', world_name, '/model/', camera_name, '/link/link/sensor/camera/image'],
@@ -82,7 +82,7 @@ def generate_launch_description():
     )
 
     spawn_camera = Node(
-        package='ros_gz_sim',
+        package='ros_ign_gazebo',
         executable='create',
         arguments=['-name', camera_name,
                    '-x', x,
