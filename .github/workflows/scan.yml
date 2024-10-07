@@ -1,0 +1,99 @@
+---
+name: Scan
+on:
+  push:
+    branches: [main, humble, jazzy]
+  pull_request:
+    branches: [main, humble, jazzy]
+  workflow_dispatch:
+permissions: read-all
+jobs:
+  lint:
+    name: 'Super-linter'
+    runs-on: intellabs-01
+    container: 'ghcr.io/github/super-linter:v5.0.0'
+    permissions:
+      contents: read
+      packages: read
+      # statuses: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        with:
+          fetch-depth: 0
+      - uses: super-linter/super-linter@e0fc164bba85f4b58c6cd17ba1dfd435d01e8a06 #v6.3.0
+        env:
+          DEFAULT_BRANCH: main
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_CLANG_FORMAT: true
+          VALIDATE_PYTHON_PYLINT: true
+          VALIDATE_YAML: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_GITLEAKS: true
+          VALIDATE_GITHUB_ACTIONS: true
+          YAML_ERROR_ON_WARNING: false
+          PYTHON_PYLINT_CONFIG_FILE: .pylintrc
+          LOG_FILE: super-linter.log
+          CREATE_LOG_FILE: true
+          FILTER_REGEX_EXCLUDE: .*/pull_request_template.md
+  trivy:
+    name: Trivy
+    runs-on: intellabs-01
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d #v0.18.0
+        with:
+          scan-type: 'fs'
+          format: 'table'
+          exit-code: '1'
+          vuln-type: 'os,library'
+  bandit:
+    name: Bandit
+    runs-on: intellabs-01
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - name: Test
+        shell: bash
+        run: |
+          pip3 install "bandit==1.7.7"
+          bandit -c .github/bandit.yaml -r .
+  license:
+    name: License check
+    runs-on: intellabs-01
+    container:
+      image: osrf/ros:humble-desktop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+      - name: Prepare System
+        shell: bash
+        run: |
+          apt update
+          apt install -y python3-pip
+          pip3 install ros-license-toolkit==1.2.2
+          apt install -y golang-go
+          go version
+          go install github.com/google/addlicense@v1.1.1
+      - name: Check for license tags
+        shell: bash
+        run: |
+            find . -type f \( -name "*.py" -o -name "*.cpp" -o -name "*.h" \) -exec "$HOME"/go/bin/addlicense -check {} +
+      - name: Run ros_license_toolkit for each Package
+        shell: bash
+        run: |
+            git config --global --add safe.directory /__w/scenario_execution/scenario_execution
+            find . -name "package.xml" | while IFS= read -r pkg_file; do
+              pkg_dir=$(dirname "$pkg_file")
+              pkg_name=$(basename "$pkg_dir")
+              if [ "$pkg_name" = "scenario_execution_rviz" ]; then
+                echo "Skipping package $pkg_name"
+                continue
+              fi
+              echo "Processing package at $pkg_dir"
+              ros_license_toolkit "$pkg_dir"
+            done
+            
