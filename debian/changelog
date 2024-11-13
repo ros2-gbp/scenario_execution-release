@@ -1,7 +1,0 @@
-ros-jazzy-scenario-execution-nav2 (1.2.0-4noble) noble; urgency=high
-
-  * Initial creation of nav2 library for scenario execution
-
- -- Intel Labs <scenario-execution@intel.com>  Tue, 01 Oct 2024 22:00:00 -0000
-
-
