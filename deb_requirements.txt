@@ -1,4 +1,0 @@
-python3-autopep8
-clang-format
-pylint
-cppzmq-dev
