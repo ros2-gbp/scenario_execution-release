@@ -1,0 +1,3 @@
+import osc.standard.base
+
+actor robot inherits osc_actor
