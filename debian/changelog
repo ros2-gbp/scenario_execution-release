@@ -1,7 +1,0 @@
-ros-jazzy-scenario-execution-interfaces (1.2.0-4noble) noble; urgency=high
-
-  * Initial creation of interfaces package for scenario execution
-
- -- Intel Labs <scenario-execution@intel.com>  Tue, 01 Oct 2024 22:00:00 -0000
-
-
