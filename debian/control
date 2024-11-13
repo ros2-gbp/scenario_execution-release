@@ -1,0 +1,12 @@
+Source: ros-jazzy-scenario-execution-control
+Section: misc
+Priority: optional
+Maintainer: Intel Labs <scenario-execution@intel.com>
+Build-Depends: debhelper (>= 9.0.0), ros-jazzy-rclpy, ros-jazzy-ros-workspace, python3-all, python3-setuptools, dh-python
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-jazzy-scenario-execution-control
+Architecture: any
+Depends: ${python3:Depends}, ${misc:Depends}, ros-jazzy-rclpy, ros-jazzy-scenario-execution, ros-jazzy-scenario-execution-interfaces, ros-jazzy-std-srvs, ros-jazzy-ros-workspace
+Description: Scenario Execution Control
