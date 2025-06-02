@@ -33,7 +33,7 @@ except:  # pylint: disable=W0702
 
 setup(
     name=PACKAGE_NAME,
-    version='1.2.0',
+    version='1.2.1',
     packages=find_namespace_packages(exclude=['test*']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -45,7 +45,7 @@ setup(
         'setuptools',
         'antlr4-python3-runtime==4.9.2',
         'pyyaml==6.0.1',
-        'py-trees==2.2.1'
+        'py-trees==2.3.0'
     ],
     zip_safe=True,
     include_package_data=True,
@@ -70,6 +70,7 @@ setup(
             'scenario_execution = scenario_execution.scenario_execution_base:main',
         ],
         'scenario_execution.actions': [
+            'compare = scenario_execution.actions.compare:Compare',
             'increment = scenario_execution.actions.increment:Increment',
             'decrement = scenario_execution.actions.decrement:Decrement',
             'log = scenario_execution.actions.log:Log',
@@ -78,7 +79,7 @@ setup(
         'scenario_execution.osc_libraries': [
             'helpers = scenario_execution.get_osc_library:get_helpers_library',
             'standard = scenario_execution.get_osc_library:get_standard_library',
-            'standard.base = scenario_execution.get_osc_library:get_standard_base_library',
+            'types = scenario_execution.get_osc_library:get_types_library',
             'robotics = scenario_execution.get_osc_library:get_robotics_library',
         ]
     },
