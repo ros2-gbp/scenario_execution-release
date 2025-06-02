@@ -30,7 +30,7 @@ tracks:
     - git-bloom-generate -y rosrelease :{ros_distro} --source upstream -i :{release_inc}
     - git-bloom-generate -y rosdebian --prefix release/:{ros_distro} :{ros_distro}
       -i :{release_inc} --os-name ubuntu
-    devel_branch: jazzy
+    devel_branch: main
     last_release: jazzy-1.2.0
     last_version: 1.2.0
     name: upstream
