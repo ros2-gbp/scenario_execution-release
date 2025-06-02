@@ -19,7 +19,7 @@ tracks:
     release_tag: :{version}
     ros_distro: humble
     vcs_type: git
-    vcs_uri: https://github.com/IntelLabs/scenario_execution.git
+    vcs_uri: https://github.com/cps-test-lab/scenario-execution.git
     version: :{auto}
   jazzy:
     actions:
@@ -40,5 +40,5 @@ tracks:
     release_tag: jazzy-:{version}
     ros_distro: jazzy
     vcs_type: git
-    vcs_uri: https://github.com/IntelLabs/scenario_execution.git
+    vcs_uri: https://github.com/cps-test-lab/scenario-execution.git
     version: :{auto}
