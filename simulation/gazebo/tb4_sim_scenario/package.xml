@@ -2,17 +2,21 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>tb4_sim_scenario</name>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <description>TurtleBot 4 Simulation Scenario Execution</description>
-  <author email="scenario-execution@intel.com">Intel Labs</author>
-  <maintainer email="scenario-execution@intel.com">Intel Labs</maintainer>
+  <author>Intel Labs</author>
+  <author email="fred-labs@mailbox.org">Frederik Pasch</author>
+  <author email="florian.mirus@gmx.net">Florian Mirus</author>
+  <maintainer email="fred-labs@mailbox.org">Frederik Pasch</maintainer>
+  <maintainer email="florian.mirus@gmx.net">Florian Mirus</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <!-- Turtlebot4 -->
   <depend>gazebo_tf_publisher</depend>
-  <depend>scenario_execution</depend>
+  <depend>scenario_execution_ros</depend>
+  <depend>scenario_execution_nav2</depend>
   <depend>message_modification</depend>
   <depend>tf_to_pose_publisher</depend>
   <depend>nav2_minimal_tb4_sim</depend>
