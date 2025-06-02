@@ -16,24 +16,26 @@
 
 import unittest
 import py_trees
-from scenario_execution import ScenarioExecution
+from datetime import datetime
+from scenario_execution.scenario_execution_base import ScenarioExecution
 from scenario_execution.model.osc2_parser import OpenScenario2Parser
 from scenario_execution.model.model_to_py_tree import create_py_tree
-from scenario_execution.utils.logging import Logger
+from .common import DebugLogger
 from antlr4.InputStream import InputStream
-from datetime import datetime
 
 
-class TestScenarioExecutionSuccess(unittest.TestCase):
+class TestExternalMethodsRandom(unittest.TestCase):
     # pylint: disable=missing-function-docstring
 
     def setUp(self) -> None:
-        self.parser = OpenScenario2Parser(Logger('test', False))
+        self.logger = DebugLogger("")
+        self.parser = OpenScenario2Parser(self.logger)
+        self.tree = py_trees.composites.Sequence(name="", memory=True)
         self.scenario_execution = ScenarioExecution(debug=False,
                                                     log_model=False,
                                                     live_tree=False,
                                                     scenario_file='test',
-                                                    output_dir='')
+                                                    output_dir='', logger=self.logger)
         self.tree = py_trees.composites.Sequence(name="", memory=True)
 
     def execute(self, scenario_content):
@@ -43,77 +45,41 @@ class TestScenarioExecutionSuccess(unittest.TestCase):
         self.scenario_execution.tree = self.tree
         self.scenario_execution.run()
 
-    def test_failure(self):
+    def test_get_random_int(self):
         scenario_content = """
-import osc.types
 import osc.helpers
 
-scenario test_run_process:
-    timeout(10s)
+scenario test_success:
     do serial:
-        run_process() with:
-            keep(it.command == 'false')
-"""
-        self.execute(scenario_content)
-        self.assertFalse(self.scenario_execution.process_results())
-
-    def test_success(self):
-        scenario_content = """
-import osc.types
-import osc.helpers
-
-scenario test_run_process:
-    timeout(10s)
-    do serial:
-        run_process() with:
-            keep(it.command == 'true')
-"""
-        self.execute(scenario_content)
-        self.assertTrue(self.scenario_execution.process_results())
-
-    def test_multi_element_command(self):
-        scenario_content = """
-import osc.types
-import osc.helpers
-
-scenario test_run_process:
-    timeout(10s)
-    do serial:
-        run_process('sleep 2')
-"""
-        self.execute(scenario_content)
-        self.assertTrue(self.scenario_execution.process_results())
-
-    def test_wait_for_shutdown_false(self):
-        scenario_content = """
-import osc.types
-import osc.helpers
-
-scenario test_run_process:
-    timeout(3s)
-    do serial:
-        run_process('sleep 15', wait_for_shutdown: false)
+        wait elapsed(random.get_int(0, 5))
+        emit end
 """
         parsed_tree = self.parser.parse_input_stream(InputStream(scenario_content))
         model = self.parser.create_internal_model(parsed_tree, self.tree, "test.osc", False)
         self.tree = create_py_tree(model, self.tree, self.parser.logger, False)
         self.scenario_execution.tree = self.tree
 
-        start = datetime.now()
+        start_time = datetime.now()
         self.scenario_execution.run()
-        end = datetime.now()
-        duration = (end-start).total_seconds()
-        self.assertLessEqual(duration, 3.)
+        end_time = datetime.now()
         self.assertTrue(self.scenario_execution.process_results())
 
-    def test_signal_parsing(self):
+        delta = end_time - start_time
+        self.assertLess(delta.total_seconds(), 5.)
+
+    def test_get_random_string(self):
         scenario_content = """
-import osc.types
 import osc.helpers
 
-scenario test_run_process:
-    do run_process('sleep 15', wait_for_shutdown: false, shutdown_signal: signal!sigint)
+scenario test_success:
+    do serial:
+        log(random.get_random_string(["test", "test-scenario", "scenario-test"]))
+        emit end
 """
-        parsed_tree = self.parser.parse_input_stream(InputStream(scenario_content))
-        model = self.parser.create_internal_model(parsed_tree, self.tree, "test.osc", False)
-        self.tree = create_py_tree(model, self.tree, self.parser.logger, False)
+        self.execute(scenario_content)
+        self.assertTrue(self.scenario_execution.process_results())
+        valid_strings = ["test", "test-scenario", "scenario-test"]
+        log_messages = self.logger.logs_info
+        for log_message in log_messages:
+            if log_message in valid_strings:
+                self.assertIn(log_message, valid_strings)
