@@ -1,10 +1,13 @@
+arm_sim_scenario
 example_external_method
 example_library
+example_nav2
 example_multi_robot
 example_scenario_control
 example_simulation
 scenario_execution_floorplan_dsl
 scenario_execution_kubernetes
+scenario_execution_moveit2
 scenario_execution_pybullet
 gazebo_static_camera
 gazebo_tf_publisher
@@ -12,7 +15,9 @@ tb4_sim_scenario
 tf_to_pose_publisher
 scenario_status
 message_modification
+scenario_execution_docker_test
 scenario_execution_gazebo_test
 scenario_execution_nav2_test
 scenario_execution_ros_test
 scenario_execution_test
+scenario_execution_moveit2
