@@ -23,7 +23,7 @@ PACKAGE_NAME = 'scenario_execution_ros'
 
 setup(
     name=PACKAGE_NAME,
-    version='1.2.0',
+    version='1.2.1',
     packages=find_namespace_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -37,6 +37,7 @@ setup(
     install_requires=[
         'setuptools',
         'transforms3d==0.4.1',
+        'py-trees-ros==2.3.0',
     ],
     zip_safe=True,
     maintainer='Intel Labs',
