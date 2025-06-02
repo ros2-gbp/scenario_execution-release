@@ -8,13 +8,13 @@ Code for all tutorials is available in :repo_link:`examples`.
 Define and Execute Scenario
 ---------------------------
 
-To create a scenario in OpenSCENARIO 2 syntax, first create a file
+To create a scenario in OpenSCENARIO DSL syntax, first create a file
 with the extension ``.osc``. Input the following code in the file.
 
 .. code-block::
 
    # import the libraries with import expression
-   import osc.standard.base
+   import osc.types
    import osc.helpers
 
    # declare the scenario by the syntax: "scenario scenario_name:"
@@ -25,17 +25,17 @@ with the extension ``.osc``. Input the following code in the file.
            wait elapsed(3s)   # wait three seconds
            log("Good Bye!")         # log another message
 
-The first two lines ``import osc.standard.base`` and ``import osc.helpers`` will import the named libraries that provide required definitions. In this example ``helpers`` library provides the ``log`` action and ``standard.base`` provides the definition of the `s` unit to specify seconds.
+The first two lines ``import osc.types`` and ``import osc.helpers`` will import the named libraries that provide required definitions. In this example ``helpers`` library provides the ``log`` action and ``types`` provides the definition of the `s` unit to specify seconds.
 
 .. note::
-   Comments in OpenSCENARIO 2 always start with ``#``.
+   Comments in OpenSCENARIO DSL always start with ``#``.
 
 Then, a scenario with the name ``hello_world`` get declared. The following colon states that all following and indented lines
 are part of it. The single top-level action of the scenario is defined in the ``do`` directive.
 The term ``serial`` states that the included actions will be executed in sequence.
 
 .. note::
-   OpenSCENARIO 2 supports the following compositions:
+   OpenSCENARIO DSL supports the following compositions:
 
    * ``parallel``: execute actions in parallel, continue afterwards
    * ``serial``: execute actions, one after the other
@@ -70,11 +70,11 @@ Create Scenario Library
 -----------------------
 
 To add new features to scenario execution, extensions libraries can be created. An extension library typically provides one or more
-OpenSCENARIO 2 definition files and might additionally provide action implementations.
+OpenSCENARIO DSL definition files and might additionally provide action implementations.
 
 To show how to create such a library for scenario execution, we will add a ``custom_action`` action as an example.
 
-First, we need to define the ``custom_action`` in a OpenSCENARIO 2 file.
+First, we need to define the ``custom_action`` in a OpenSCENARIO DSL file.
 
 .. code-block::
 
@@ -160,33 +160,27 @@ and control it with Nav2, can be found in :repo_link:`examples/example_nav2/exam
 
 This scenario files looks as follows:
 
-::
+.. code-block::
 
+    import osc.helpers
     import osc.ros
+    import osc.nav2
 
-    scenario nav2_simulation_nav_to_pose:
+    scenario example_nav2:
+        timeout(60s)
         robot: differential_drive_robot
-        do parallel:
-            test_drive: serial:
-                robot.init_nav2(pose_3d(position_3d(x: 0.0m, y: 0.0m)))
-                robot.nav_to_pose(pose_3d(position_3d(x: 3.0m, y: -3.0m)))
-                robot.nav_to_pose(pose_3d(position_3d(x: 0.0m, y: 0.0m)))
-                emit end
-            time_out: serial:
-                wait elapsed(120s)
-                emit fail
+        do serial:
+            robot.init_nav2(pose_3d(position_3d(x: 0.0m, y: 0.0m)))
+            robot.nav_to_pose(pose_3d(position_3d(x: 3.0m, y: -3.0m)))
 
 Let’s break down the individual components of the scenario. The
 following snippet defines the turtlebot4 amr-object.
 
 .. code-block::
 
-   turtlebot4: differential_drive_robot:            # define turtlebot4 robot
+   robot: differential_drive_robot
 
-The ``do parallel`` runs the actual test drive and a time-out in
-parallel. In case something goes wrong, the time-out prevents the
-scenario from running indefinitely by canceling it after 2 minutes and
-marking it as failed.
+The ``do serial`` runs the actual test drive. A modifier is used to specify a timeout. If the scenario takes longer than 60 seconds, it will be marked as failed.
 
 
 Before being able to navigate, nav2 needs to be initialized. This
@@ -195,7 +189,7 @@ includes setting the initial pose of the Nav2 localization module
 
 .. code-block::
 
-   turtlebot4.init_nav2(pose_3d(position_3d(x: 0.0m, y: 0.0m)))                        # initialize Nav2
+   robot.init_nav2(pose_3d(position_3d(x: 0.0m, y: 0.0m)))
 
 Finally, the following snippet calls the Nav2 `NavigateToPose
 action <https://github.com/ros-planning/navigation2/blob/main/nav2_msgs/action/NavigateToPose.action>`__
@@ -204,59 +198,39 @@ starting position
 
 .. code-block::
 
-    turtlebot4.nav_to_pose(pose_3d(position_3d(x: 3.0m, y: -3.0m)))
-    turtlebot4.nav_to_pose(pose_3d(position_3d(x: 0.0m, y: 0.0m)))
+    robot.nav_to_pose(pose_3d(position_3d(x: 3.0m, y: -3.0m)))
 
-Once the robot reached the final goal pose ``emit end`` finishes the
-scenario and marks it as successful.
+Once the robot reached the final goal pose the scenario is marked as successful and the execution ends.
 
 To try this example, run
 
 .. code-block:: bash
 
-   ros2 launch tb4_sim_scenario sim_nav_scenario_launch.py scenario:=examples/example_nav2/example_nav2.osc headless:=False
+   ros2 launch example_nav2 example_nav2_launch.py
 
-and you should see something like this
-
-.. figure:: images/tb4_scenario.gif
-   :alt: turtlebot4 nav2 scenario
-
-   Turtlebot4 NAV2 scenario
 
 In case you want to run the navigation with SLAM instead of AMCL, update
 the above described scenario by setting the ``use_initial_pose`` to ``False``:
 
-::
-
+.. code-block::
+    
+    import osc.helpers
     import osc.ros
+    import osc.nav2
 
-    scenario nav2_simulation_nav_to_pose:
+    scenario example_nav2:
+        timeout(60s)
         robot: differential_drive_robot
-        do parallel:
-            test_drive: serial:
-                robot.init_nav2(
-                    initial_pose: pose_3d(position_3d(x: 0.0m, y: 0.0m)),
-                    use_initial_pose: false)
-                robot.nav_to_pose(pose_3d(position_3d(x: 3.0m, y: -3.0m)))
-                robot.nav_to_pose(pose_3d(position_3d(x: 0.0m, y: 0.0m)))
-                emit end
-            time_out: serial:
-                wait elapsed(120s)
-                emit fail
-
+        do serial:
+            robot.init_nav2(pose_3d(position_3d(x: 0.0m, y: 0.0m)), use_initial_pose: false)
+            robot.nav_to_pose(pose_3d(position_3d(x: 3.0m, y: -3.0m)))
 
 Then, run:
 
 .. code-block:: bash
 
-   ros2 launch tb4_sim_scenario sim_nav_scenario_launch.py scenario:=examples/example_nav2/example_nav2.osc headless:=false slam:=True
+   ros2 launch example_nav2 example_nav2_launch.py slam:=False
 
-and you should see something like this
-
-.. figure:: images/tb4_scenario_slam.PNG
-   :alt: turtlebot4 nav2 scenario SLAM
-
-   Turtlebot4 NAV2 scenario SLAM
 
 Create Navigation Scenario with Obstacle
 ----------------------------------------
@@ -417,7 +391,7 @@ It is possible to call external python methods and use their return value within
 
 .. code-block::
 
-    import osc.standard.base
+    import osc.types
     import osc.helpers
 
     struct lib:
