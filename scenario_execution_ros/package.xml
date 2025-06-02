@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>scenario_execution_ros</name>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <description>Scenario Execution for ROS</description>
   <author email="scenario-execution@intel.com">Frederik Pasch</author>
   <author email="scenario-execution@intel.com">Florian Mirus</author>
@@ -16,7 +16,6 @@
   <exec_depend>py_trees</exec_depend>
   <exec_depend>py_trees_ros</exec_depend>
   <exec_depend>py_trees_ros_interfaces</exec_depend>
-  <exec_depend>scenario_execution_py_trees_ros</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>xacro</exec_depend>
   <exec_depend>rcl_interfaces</exec_depend>
