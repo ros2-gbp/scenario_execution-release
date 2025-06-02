@@ -5,6 +5,7 @@ example_nav2
 example_multi_robot
 example_scenario_control
 example_simulation
+scenario_execution_docker
 scenario_execution_floorplan_dsl
 scenario_execution_kubernetes
 scenario_execution_moveit2
