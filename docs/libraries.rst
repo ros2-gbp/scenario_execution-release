@@ -1005,6 +1005,10 @@ Initialize nav2.
      - ``bool``
      - ``false``
      - If true the initial pose needs to be set externally (e.g. manually through rviz)
+   * - ``wait_for_amcl``
+     - ``bool``
+     - ``true``
+     - If true, wait for amcl localization to be ready
 
 ``differential_drive_robot.nav_through_poses()``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1585,6 +1589,38 @@ Execute a ROS launch file.
      - ``10s``
      - (Only used ``if wait_for_shutdown`` is ``false``) Time to wait between ``SIGINT`` and ``SIGKILL`` getting sent, if process is still running on scenario shutdown
 
+
+``ros_run()``
+^^^^^^^^^^^^^^^^
+
+Run a package specific executable.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+   
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``package_name``
+     - ``string``
+     - 
+     - package that contains the executable
+   * - ``executable_name``
+     - ``string``
+     - 
+     - name of executable
+   * - ``wait_for_shutdown``
+     - ``bool``
+     - ``true``
+     - If true, the action waits until the execution is finished
+   * - ``shutdown_timeout``
+     - ``time``
+     - ``10s``
+     - (Only used ``if wait_for_shutdown`` is ``false``) Time to wait between ``SIGINT`` and ``SIGKILL`` getting sent, if process is still running on scenario shutdown
+
 ``service_call()``
 ^^^^^^^^^^^^^^^^^^
 
@@ -1611,6 +1647,15 @@ Call a ROS service and wait for the reply.
      - ``string``
      - 
      - Service call content
+   * - ``response_variable``
+     - ``variable``
+     - 
+     - variable to store the response in
+   * - ``response_member_name``
+     - ``string``
+     - ``''``
+     - if not empty, only the value of the member is stored within the ``response_variable``
+
 
 ``set_node_parameter()``
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1748,6 +1793,94 @@ Wait for nodes to get available.
      - 
      - List of nodes to wait for
 
+``wait_for_service_server()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Wait for a specific node to provide a ROS2 service.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``service``
+     - ``string``
+     - 
+     - Name of the service to wait for (e.g. ``/my_service``)
+   * - ``node_name``
+     - ``string``
+     - 
+     - Name of the node that should provide the service
+
+``wait_for_services()``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Wait for ROS2 services to become available. This action succeeds once all services are available.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``services``
+     - ``list of string``
+     - 
+     - List of service names to wait for (e.g. ``/my_service``).
+
+
+``wait_for_topic_publisher()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Wait for a specific node to create a publisher for a topic.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``topic``
+     - ``string``
+     - 
+     - Name of the topic to check for publishers (e.g. ``/topic``)
+   * - ``node_name``
+     - ``string``
+     - 
+     - Name of the node that should be publishing to the topic
+
+``wait_for_topic_subscription()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Wait for a specific node to subscribe to a topic.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``topic``
+     - ``string``
+     - 
+     - Name of the topic to check for subscribers (e.g. ``/topic``)
+   * - ``node_name``
+     - ``string``
+     - 
+     - Name of the node that should be subscribed to the topic
 
 ``wait_for_topics()``
 ^^^^^^^^^^^^^^^^^^^^^

@@ -23,7 +23,7 @@ PACKAGE_NAME = 'scenario_execution_ros'
 
 setup(
     name=PACKAGE_NAME,
-    version='1.2.1',
+    version='1.3.0',
     packages=find_namespace_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -63,12 +63,17 @@ setup(
             'differential_drive_robot.tf_close_to = scenario_execution_ros.actions.tf_close_to:TfCloseTo',
             'log_check = scenario_execution_ros.actions.ros_log_check:RosLogCheck',
             'ros_launch = scenario_execution_ros.actions.ros_launch:RosLaunch',
+            'ros_run = scenario_execution_ros.actions.ros_run:RosRun',
             'service_call = scenario_execution_ros.actions.ros_service_call:RosServiceCall',
             'set_node_parameter = scenario_execution_ros.actions.ros_set_node_parameter:RosSetNodeParameter',
             'topic_monitor = scenario_execution_ros.actions.ros_topic_monitor:RosTopicMonitor',
             'topic_publish = scenario_execution_ros.actions.ros_topic_publish:RosTopicPublish',
             'wait_for_data = scenario_execution_ros.actions.ros_topic_wait_for_data:RosTopicWaitForData',
             'wait_for_nodes = scenario_execution_ros.actions.ros_wait_for_nodes:RosWaitForNodes',
+            'wait_for_service_server = scenario_execution_ros.actions.ros_service_wait_for_service_server:RosServiceWaitForServiceServer',
+            'wait_for_services = scenario_execution_ros.actions.ros_service_wait_for_services:RosServiceWaitForServices',
+            'wait_for_topic_publisher = scenario_execution_ros.actions.ros_topic_wait_for_topic_publisher:RosTopicWaitForTopicPublisher',
+            'wait_for_topic_subscription = scenario_execution_ros.actions.ros_topic_wait_for_topic_subscription:RosTopicWaitForTopicSubscription',
             'wait_for_topics = scenario_execution_ros.actions.ros_topic_wait_for_topics:RosTopicWaitForTopics',
         ],
         'scenario_execution.osc_libraries': [
