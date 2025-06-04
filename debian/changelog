@@ -1,0 +1,20 @@
+ros-jazzy-scenario-execution-nav2 (1.3.0-1noble) noble; urgency=high
+
+  * example_nav2: use loopback navigation
+
+ -- Frederik Pasch <fred-labs@mailbox.org>  Tue, 03 Jun 2025 22:00:00 -0000
+
+ros-jazzy-scenario-execution-nav2 (1.2.1-1noble) noble; urgency=high
+
+  * update py-trees dependency
+  * update from OpenSCENARIO 2.0 to OpenSCENARIO DSL V2.1.0
+
+ -- Frederik Pasch <fred-labs@mailbox.org>  Mon, 26 May 2025 22:00:00 -0000
+
+ros-jazzy-scenario-execution-nav2 (1.2.0-1noble) noble; urgency=high
+
+  * Initial creation of nav2 library for scenario execution
+
+ -- Intel Labs <scenario-execution@intel.com>  Tue, 01 Oct 2024 22:00:00 -0000
+
+
