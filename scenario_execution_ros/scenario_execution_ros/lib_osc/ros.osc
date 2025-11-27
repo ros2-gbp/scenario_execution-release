@@ -33,6 +33,9 @@ struct msg_conversion:
     def get_object_member(in_value: string, member_name: string = "") -> string is external scenario_execution_ros.external_methods.msg_conversion.get_object_member()
     def to_pose_3d(in_value: string) -> pose_3d is external scenario_execution_ros.external_methods.msg_conversion.to_pose_3d()
 
+struct ament:
+    def get_package_share_directory(package_name: string) -> string is external ament_index_python.packages.get_package_share_directory()
+
 action action_call:
     # Call a ros action and wait for the result
     action_name: string                  # name of the action to connect to
@@ -134,8 +137,8 @@ action log_check:
 
 action ros_launch:
     # Execute a ros launch file
-    package_name: string                 # package that contains the launch file
-    launch_file: string                  # launch file name
+    package_name: string                 # package that contains the launch file, or empty if the launch file is specified as a path
+    launch_file: string                  # launch file name, if the package_name is empty the launch_file is used as a path (either an absolute path or relative to the scenario file) 
     arguments: list of key_value         # ros arguments (get forwarded as key:=value pairs)
     wait_for_shutdown: bool = true       # if true, the action waits until the execution has finished
     shutdown_timeout: time = 10s         # (only used if wait_for_shutdown is false) time to wait between SIGINT and SIGKILL getting sent, if process is still running on scenario shutdown

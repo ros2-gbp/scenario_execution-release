@@ -1,4 +1,5 @@
 # Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2025 Frederik Pasch
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +34,7 @@ except:  # pylint: disable=W0702
 
 setup(
     name=PACKAGE_NAME,
-    version='1.3.0',
+    version='1.4.0',
     packages=find_namespace_packages(exclude=['test*']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -49,8 +50,8 @@ setup(
     ],
     zip_safe=True,
     include_package_data=True,
-    maintainer='Intel Labs',
-    maintainer_email='scenario-execution@intel.com',
+    maintainer='Frederik Pasch',
+    maintainer_email='fred-labs@mailbox.org',
     url='https://github.com/IntelLabs/scenario_execution',
     project_urls={
         "Homepage": "https://github.com/IntelLabs/scenario_execution",
