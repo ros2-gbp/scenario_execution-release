@@ -1,3 +1,4 @@
+# Copyright (C) 2025 Frederik Pasch
 # Copyright (C) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +18,14 @@
 import copy
 import py_trees
 from py_trees.common import Access, Status
-from pkg_resources import iter_entry_points
+from importlib.metadata import entry_points
 import inspect
 
 from scenario_execution.model.types import KeepConstraintDeclaration, visit_expression, ActionDeclaration, BinaryExpression, EventReference, Expression, FunctionApplicationExpression, ModifierInvocation, ScenarioDeclaration, DoMember, WaitDirective, EmitDirective, BehaviorInvocation, EventCondition, EventDeclaration, RelationExpression, LogicalExpression, ElapsedExpression, PhysicalLiteral, ModifierDeclaration
 from scenario_execution.model.model_base_visitor import ModelBaseVisitor
 from scenario_execution.model.error import OSC2ParsingError
 from scenario_execution.actions.base_action import BaseAction
+from scenario_execution.actions.base_action_subtree import BaseActionSubtree
 
 
 def create_py_tree(model, tree, logger, log_tree):
@@ -263,7 +265,9 @@ class ModelToPyTree(object):
             elif isinstance(node.behavior, ActionDeclaration):
                 behavior_name = node.behavior.name
                 available_plugins = []
-                for entry_point in iter_entry_points(group='scenario_execution.actions', name=None):
+                action_eps = entry_points(group='scenario_execution.actions')
+
+                for entry_point in action_eps:
                     # self.logger.debug(f'entry_point.name is {entry_point.name}')
                     if entry_point.name == behavior_name:
                         available_plugins.append(entry_point)
@@ -284,9 +288,9 @@ class ModelToPyTree(object):
                     )
                 behavior_cls = available_plugins[0].load()
 
-                if not issubclass(behavior_cls, BaseAction):
+                if not issubclass(behavior_cls, BaseAction) and not issubclass(behavior_cls, BaseActionSubtree) :
                     raise OSC2ParsingError(
-                        msg=f"Found plugin for '{behavior_name}', but it's not derived from BaseAction.",
+                        msg=f"Found plugin for '{behavior_name}', but it's not derived from BaseAction or BaseActionSubtree.",
                         context=node.get_ctx()
                     )
 
@@ -357,6 +361,11 @@ class ModelToPyTree(object):
                 previous = self.__cur_behavior
                 self.__cur_behavior = instance
                 super().visit_behavior_invocation(node)
+
+		# For BaseActionSubtree, check create_subtree method instead of execute
+                create_subtree_method = getattr(behavior_cls, "create_subtree", None)
+                if issubclass(behavior_cls, BaseActionSubtree) and create_subtree_method is not None:
+                    create_subtree_method(self.__cur_behavior)
                 self.__cur_behavior = previous
 
         def visit_event_reference(self, node: EventReference):
