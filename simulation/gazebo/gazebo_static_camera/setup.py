@@ -23,7 +23,7 @@ PACKAGE_NAME = 'gazebo_static_camera'
 
 setup(
     name=PACKAGE_NAME,
-    version='1.3.0',
+    version='1.4.0',
     packages=find_namespace_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -34,8 +34,8 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Intel Labs',
-    maintainer_email='scenario-execution@intel.com',
+    maintainer='Frederik Pasch',
+    maintainer_email='fred-labs@mailbox.org',
     description='Spawn a static camera within a gazebo world',
     license='Apache License 2.0',
     tests_require=['pytest'],

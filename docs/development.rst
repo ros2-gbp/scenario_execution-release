@@ -1,4 +1,3 @@
-
 Development
 ===========
 
@@ -31,6 +30,19 @@ To run only specific tests:
    #manual run
    colcon build --packages-up-to scenario_execution_ros && reset && ros2 launch scenario_execution_ros scenario_launch.py scenario:=<...> debug:=True
 
+   #using colcon
+   colcon test --packages-select scenario_execution \
+      --event-handlers console_direct+ \
+      --return-code-on-test-failure \
+      --pytest-args -k <TEST> \
+      -s
+
+   #using colcon with filtered test
+   colcon test --packages-select scenario_execution \
+  --event-handlers console_direct+ \
+  --return-code-on-test-failure \
+  --pytest-args test/test_parameter_override.py::TestParameterOverride::test_base_params_success \
+  -s
 
 Developing and Debugging with Visual Studio Code
 ------------------------------------------------
@@ -105,3 +117,15 @@ Implement an Action
 - If your action makes use of variables, set ``resolve_variable_reference_arguments_in_execute`` in ``BaseAction.__init()`` to  ``False``.
   The ``execute()`` method arguments will then contain resolved values as before, except for variable arguments which are accessible
   as ``VariableReference`` (with methods ``set_value()`` and ``get_value()``).
+
+Implement an Action with Complex Behavior Tree
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For actions that need to provide their own complex behavior tree implementation, inherit from ``BaseActionSubtree`` instead of ``BaseAction``:
+
+- Override ``create_subtree()`` method instead of ``update()``
+- ``create_subtree()`` should return a complete ``py_trees.behaviour.Behaviour`` that implements the action logic
+- All OSC2 parameters are passed to ``create_subtree()`` method, similar to ``execute()`` in ``BaseAction``
+- The subtree is created once during action initialization and managed internally
+- Use ``BaseActionSubtree`` when you need composite behaviors, decorators, or complex state machines that are better expressed as behavior trees rather than a single behavior's ``update()`` method
+- Arguments follow the same rules as ``BaseAction``: can be consumed in ``__init__()`` or ``create_subtree()``, but not both

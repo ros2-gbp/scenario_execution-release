@@ -21,17 +21,20 @@ PACKAGE_NAME = 'scenario_execution_os'
 
 setup(
     name=PACKAGE_NAME,
-    version='1.3.0',
+    version='1.4.0',
     packages=find_namespace_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + PACKAGE_NAME]),
         ('share/' + PACKAGE_NAME, ['package.xml'])
     ],
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'psutil'
+    ],
     zip_safe=True,
-    maintainer='Intel Labs',
-    maintainer_email='scenario-execution@intel.com',
+    maintainer='Frederik Pasch',
+    maintainer_email='fred-labs@mailbox.org',
     description='Scenario Execution library for OS interactions',
     license='Apache License 2.0',
     tests_require=['pytest'],
@@ -40,6 +43,7 @@ setup(
         'scenario_execution.actions': [
             'check_file_exists = scenario_execution_os.actions.check_file_exists:CheckFileExists',
             'check_file_not_exists = scenario_execution_os.actions.check_file_not_exists:CheckFileNotExists',
+            'check_process_running = scenario_execution_os.actions.check_process_running:CheckProcessRunning',
         ],
         'scenario_execution.osc_libraries': [
             'os = '
