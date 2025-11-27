@@ -1,4 +1,5 @@
 # Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2025 Frederik Pasch
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +28,17 @@ from scenario_execution.model.model_file_loader import ModelFileLoader
 from dataclasses import dataclass
 from xml.sax.saxutils import escape  # nosec B406 # escape is only used on an internally generated error string
 from timeit import default_timer as timer
-import yaml
+import subprocess  # nosec B404
+
+class ScenarioExecutionConfig:
+    _instance = None
+    scenario_file_directory = None
+    output_directory = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
 
 class ShutdownHandler:
@@ -92,6 +103,8 @@ class ScenarioExecution(object):
                  setup_timeout=py_trees.common.Duration.INFINITE,
                  tick_period: float = 0.1,
                  scenario_parameter_file=None,
+                 create_scenario_parameter_file_template=None,
+                 post_run=None,
                  logger=None,
                  register_signal=True) -> None:
 
@@ -108,10 +121,20 @@ class ScenarioExecution(object):
         self.log_model = log_model
         self.live_tree = live_tree
         self.scenario_file = scenario_file
+        ScenarioExecutionConfig().scenario_file_directory = os.path.abspath(os.path.dirname(scenario_file)) if scenario_file else None
         self.output_dir = output_dir
+        ScenarioExecutionConfig().output_directory = os.path.abspath(output_dir) if output_dir else None
         self.dry_run = dry_run
         self.render_dot = render_dot
+        self.post_run = post_run
+        if self.post_run:
+            if not os.path.isfile(self.post_run):
+                raise ValueError(f"Post-run command '{self.post_run}' does not exist.")
+            if not os.access(self.post_run, os.X_OK):
+                raise ValueError(f"Post-run command '{self.post_run}' is not executable.")
+            self.post_run = os.path.abspath(self.post_run)
         if self.output_dir and not self.dry_run:
+            self.output_dir = os.path.abspath(self.output_dir)
             if not os.path.isdir(self.output_dir):
                 try:
                     os.mkdir(self.output_dir)
@@ -136,14 +159,8 @@ class ScenarioExecution(object):
         self.last_snapshot_visitor = None
         self.shutdown_requested = False
         self.results = []
-        self.scenario_parameter_overrides = None
-
-        if scenario_parameter_file:
-            with open(scenario_parameter_file) as stream:
-                try:
-                    self.scenario_parameter_overrides = yaml.safe_load(stream)
-                except yaml.YAMLError as e:
-                    raise ValueError(f"Unable to parse yaml file '{scenario_parameter_file}': {e}") from e
+        self.create_scenario_parameter_file_template = create_scenario_parameter_file_template
+        self.scenario_parameter_file = scenario_parameter_file
 
     def setup(self, scenario: py_trees.behaviour.Behaviour, **kwargs) -> bool:
         """
@@ -239,7 +256,9 @@ class ScenarioExecution(object):
                                            processing_time=datetime.now() - start))
             return False
         try:
-            self.tree = parser.process_file(self.scenario_file, self.log_model, self.debug, self.scenario_parameter_overrides)
+            self.tree = parser.process_file(self.scenario_file, self.log_model, self.debug, self.scenario_parameter_file, self.create_scenario_parameter_file_template)
+            if self.create_scenario_parameter_file_template:
+                return True
         except Exception as e:  # pylint: disable=broad-except
             self.add_result(ScenarioResult(name=f'Parsing of {self.scenario_file}',
                                            result=False,
@@ -319,6 +338,15 @@ class ScenarioExecution(object):
                 except Exception as e:  # pylint: disable=broad-except
                     # use print, as logger might not be available during shutdown
                     print(f"Could not write results to '{self.output_dir}': {e}")
+
+                # Run post-run if specified
+                if self.post_run:
+                    try:
+                        self.logger.info(f"Running post-run: {self.post_run} {self.output_dir}")
+                        subprocess.run([self.post_run, self.output_dir], check=True)
+                    except subprocess.CalledProcessError as e:
+                        print(f"post-run failed: {e}")
+                        result = False
         return result
 
     def pre_tick_handler(self, behaviour_tree):
@@ -369,7 +397,7 @@ class ScenarioExecution(object):
                                            failure_output=failure_output))
 
     @staticmethod
-    def parse_args(args):
+    def get_arg_parser():
         parser = argparse.ArgumentParser()
         parser.add_argument('-d', '--debug', action='store_true', help='debugging output')
         parser.add_argument('-l', '--log-model', action='store_true',
@@ -382,16 +410,17 @@ class ScenarioExecution(object):
         parser.add_argument('-s', '--step-duration', type=float, help='Duration between the behavior tree step executions', default=0.1)
         parser.add_argument('--scenario-parameter-file', type=str,
                             help='File specifying scenario parameter. These will override default values.')
+        parser.add_argument('--create-scenario-parameter-file-template',action='store_true', help='Command to run to create a scenario parameter file template specified by --scenario-parameter-file')
+        parser.add_argument('--post-run', type=str, help='Command to run after scenario execution (expected commandline: <command> <output_dir>)')
         parser.add_argument('scenario', type=str, help='scenario file to execute', nargs='?')
-        args, _ = parser.parse_known_args(args)
-        return args
+        return parser
 
 
 def main():
     """
     main function
     """
-    args = ScenarioExecution.parse_args(sys.argv[1:])
+    args, _ = ScenarioExecution.get_arg_parser().parse_known_args(sys.argv[1:])
     try:
         scenario_execution = ScenarioExecution(debug=args.debug,
                                                log_model=args.log_model,
@@ -401,14 +430,20 @@ def main():
                                                dry_run=args.dry_run,
                                                render_dot=args.dot,
                                                tick_period=args.step_duration,
-                                               scenario_parameter_file=args.scenario_parameter_file)
+                                               scenario_parameter_file=args.scenario_parameter_file,
+                                               create_scenario_parameter_file_template=args.create_scenario_parameter_file_template,
+                                               post_run=args.post_run)
     except ValueError as e:
         print(f"Error while initializing: {e}")
         sys.exit(1)
     result = scenario_execution.parse()
-    if result and not args.dry_run:
+    if result and not args.dry_run and not args.create_scenario_parameter_file_template:
         scenario_execution.run()
-    result = scenario_execution.process_results()
+    if args.create_scenario_parameter_file_template:
+        result = True
+    else:
+        result = scenario_execution.process_results()
+
     if result:
         sys.exit(0)
     else:
