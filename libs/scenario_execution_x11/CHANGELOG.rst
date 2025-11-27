@@ -2,6 +2,10 @@
 Changelog for package scenario_execution_x11
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.4.0 (2025-11-27)
+------------------
+* Support webm in capture_screen
+
 1.3.0 (2025-06-04)
 ------------------
 
