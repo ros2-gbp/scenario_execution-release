@@ -1,4 +1,3 @@
-# Copyright (C) 2024 Intel Corporation
 # Copyright (C) 2025 Frederik Pasch
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,20 +14,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from . import actions
-from . import utils
-from . import model
-from scenario_execution.scenario_execution_base import ScenarioExecution, ShutdownHandler
-from scenario_execution.utils.logging import BaseLogger, Logger
-from scenario_execution.model.external_interface import get_scenario_parameters
+from scenario_execution.scenario_execution_base import ScenarioExecutionConfig
 
-__all__ = [
-    'actions',
-    'utils',
-    'model',
-    'BaseLogger',
-    "Logger",
-    'ScenarioExecution',
-    'ShutdownHandler',
-    'get_scenario_parameters'
-]
+def get_scenario_file_directory():
+    """
+    Returns the directory where scenario files are stored.
+    """
+    return ScenarioExecutionConfig().scenario_file_directory
+
+def get_output_directory():
+    """
+    Returns the output directory for scenario execution.
+    """
+    return ScenarioExecutionConfig().output_directory
