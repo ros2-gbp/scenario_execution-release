@@ -1,4 +1,5 @@
 # Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2025 Frederik Pasch
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +15,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import os
 import re
+import yaml
 
 from antlr4 import FileStream, CommonTokenStream
 from antlr4.error.ErrorListener import ErrorListener
@@ -28,7 +31,6 @@ from scenario_execution.model.model_to_py_tree import create_py_tree
 from scenario_execution.model.model_resolver import resolve_internal_model
 from scenario_execution.model.model_blackboard import create_py_tree_blackboard
 import py_trees
-import copy
 
 
 class OpenScenario2Parser(object):
@@ -38,13 +40,13 @@ class OpenScenario2Parser(object):
         self.logger = logger
         self.parsed_files = []
 
-    def process_file(self, file, log_model: bool = False, debug: bool = False, scenario_parameter_overrides: dict = None):
+    def process_file(self, file, log_model: bool = False, debug: bool = False, scenario_parameter_file: str = None, create_scenario_parameter_file_template: bool = False):
         """ Convenience method to execute the parsing and print out tree """
 
         parsed_model = self.parse_file(file, log_model)
 
         tree = py_trees.composites.Sequence(name="", memory=True)
-        model = self.create_internal_model(parsed_model, tree, file, log_model, debug, scenario_parameter_overrides)
+        model = self.create_internal_model(parsed_model, tree, file, log_model, debug, scenario_parameter_file, create_scenario_parameter_file_template)
 
         if len(model.find_children_of_type(ScenarioDeclaration)) == 0:
             raise ValueError("No scenario defined.")
@@ -56,8 +58,8 @@ class OpenScenario2Parser(object):
 
         return create_py_tree(model, tree, self.logger, log_model)
 
-    def load_internal_model(self, tree, file_name: str, log_model: bool = False, debug: bool = False):
-        model_builder = ModelBuilder(self.logger, self.parse_file, file_name, log_model)
+    def load_internal_model(self, tree, file_name: str, log_model: bool = False, debug: bool = False, skip_imports: bool = False):
+        model_builder = ModelBuilder(self.logger, self.parse_file, file_name, log_model, skip_imports)
         walker = ParseTreeWalker()
 
         model = None
@@ -71,18 +73,71 @@ class OpenScenario2Parser(object):
             print_tree(model, self.logger)
         return model
 
-    def create_internal_model(self, parsed_model, tree, file_name: str, log_model: bool = False, debug: bool = False, scenario_parameter_overrides: dict = None):
+    def create_internal_model(self, parsed_model, tree, file_name: str, log_model: bool = False, debug: bool = False, scenario_parameter_file: str = None, create_scenario_parameter_file_template: bool = False):
         model = self.load_internal_model(parsed_model, file_name, log_model, debug)
         resolve_internal_model(model, tree, self.logger, log_model)
 
         # override parameter with externally defined ones
-        if scenario_parameter_overrides:
-            self.apply_parameter_overrides(model, scenario_parameter_overrides)
+        if scenario_parameter_file:
+            if not create_scenario_parameter_file_template:
+                with open(scenario_parameter_file) as stream:
+                    try:
+                        scenario_parameter_overrides = yaml.safe_load(stream)
+                    except yaml.YAMLError as e:
+                        raise ValueError(f"Unable to parse scenario-parameter-file file '{scenario_parameter_file}': {e}") from e
+                if scenario_parameter_overrides:
+                    self.apply_parameter_overrides(model, scenario_parameter_overrides)
+            else:
+                self.create_parameter_file_template(model, scenario_parameter_file)
         return model
+
+    def create_parameter_file_template(self, model, scenario_parameter_file: str):
+        if os.path.exists(scenario_parameter_file):
+            raise ValueError(f"Scenario parameter file template '{scenario_parameter_file}' already exists.")
+        scenario_parameter_overrides = {}
+        for scenario in model.find_children_of_type(ScenarioDeclaration):
+            scenario_parameter_overrides[scenario.name] = {}
+            for parameter in scenario.find_children_of_type(ParameterDeclaration):
+                child_def = parameter.get_value_child()
+                _, is_list = parameter.get_type()
+                try:
+                    if is_list:
+                        if child_def is None:
+                            scenario_parameter_overrides[scenario.name][parameter.name] = []
+                        else:
+                            scenario_parameter_overrides[scenario.name][parameter.name] = child_def.get_resolved_value()
+                    else:
+                        if child_def is not None:
+                            scenario_parameter_overrides[scenario.name][parameter.name] = child_def.get_resolved_value()
+                        else:
+                            type_def = parameter.find_first_child_of_type(Type).type_def
+                            if isinstance(type_def, PhysicalTypeDeclaration):
+                                scenario_parameter_overrides[scenario.name][parameter.name] = 0.0
+                            elif isinstance(type_def, str):
+                                if type_def == "string":
+                                    scenario_parameter_overrides[scenario.name][parameter.name] = ""
+                                elif type_def == "float":
+                                    scenario_parameter_overrides[scenario.name][parameter.name] = 0.0
+                                elif type_def == "int":
+                                    scenario_parameter_overrides[scenario.name][parameter.name] = 0
+                                elif type_def == "bool":
+                                    scenario_parameter_overrides[scenario.name][parameter.name] = False
+                                else:
+                                    raise ValueError(f"Invalid base type: {type_def}")
+                            elif isinstance(type_def, StructDeclaration):
+                                scenario_parameter_overrides[scenario.name][parameter.name] = type_def.get_resolved_value()
+                except ValueError as e:
+                    raise ValueError(f"{parameter.name} {e}") from e
+        with open(scenario_parameter_file, 'w') as stream:
+            yaml.dump(scenario_parameter_overrides, stream)
+        self.logger.info(f"Created scenario parameter file template: {scenario_parameter_file}")
+
 
     def apply_parameter_overrides(self, model, scenario_parameter_overrides):
         keys = list(scenario_parameter_overrides.keys())
+        print("Applying parameter overrides for scenarios:", keys)
         for scenario in model.find_children_of_type(ScenarioDeclaration):
+            print(f"Applying parameter overrides for scenario: {scenario}")
             if scenario.name in keys:
                 keys.remove(scenario.name)
                 if scenario_parameter_overrides[scenario.name] is None:
@@ -250,16 +305,26 @@ class OpenScenario2Parser(object):
                         self.set_override_value_list_entries(list_expr, param_type, param_override_val)
                     else:
                         if isinstance(val, (BoolLiteral, FloatLiteral, IntegerLiteral, FloatLiteral, StringLiteral)):
-                            literal = copy.deepcopy(val)
-                            literal.value = self.check_and_convert_override_value_literal_type(val, param_override_val)
+                            # Create new literal instead of deepcopy to avoid circular reference issues
+                            new_value = self.check_and_convert_override_value_literal_type(val, param_override_val)
+                            if isinstance(val, BoolLiteral):
+                                literal = BoolLiteral("true" if new_value else "false")
+                            elif isinstance(val, FloatLiteral):
+                                literal = FloatLiteral(new_value)
+                            elif isinstance(val, IntegerLiteral):
+                                literal = IntegerLiteral("int", new_value)
+                            elif isinstance(val, StringLiteral):
+                                literal = StringLiteral(new_value)
                             arg.set_children(literal)
                         elif isinstance(val, PhysicalLiteral):
-                            literal = copy.deepcopy(val)
-                            val_literal = literal.find_first_child_of_type((FloatLiteral, IntegerLiteral))
+                            # Create new PhysicalLiteral instead of deepcopy to avoid circular reference issues
+                            val_literal = val.find_first_child_of_type((FloatLiteral, IntegerLiteral))
                             if isinstance(val_literal, FloatLiteral) and isinstance(param_override_val, (int, float)):
-                                val_literal.value = float(param_override_val)
+                                literal = PhysicalLiteral(val.unit, float(param_override_val))
+                                literal.set_children(FloatLiteral(float(param_override_val)))
                             elif isinstance(val_literal, IntegerLiteral) and isinstance(param_override_val, int):
-                                val_literal.value = param_override_val
+                                literal = PhysicalLiteral(val.unit, param_override_val)
+                                literal.set_children(IntegerLiteral("int", param_override_val))
                             else:
                                 raise ValueError(f"Invalid physical literal.")
                             arg.set_children(literal)
@@ -272,6 +337,15 @@ class OpenScenario2Parser(object):
 
                             self.create_override_value_function_application(funct_app, type_def, list(
                                 param_override_val.keys()), param_override_val)
+                        elif val is None and isinstance(param_override_val, str):
+                            literal = StringLiteral(param_override_val)
+                            arg.set_children(literal)
+                        elif val is None and isinstance(param_override_val, float):
+                            literal = FloatLiteral(param_override_val)
+                            arg.set_children(literal)
+                        elif val is None and isinstance(param_override_val, int):
+                            literal = IntegerLiteral("int", param_override_val)
+                            arg.set_children(literal)
                         else:
                             raise ValueError(f"Parameter {param.name} does not match override {param_override_val}")
 
