@@ -1,9 +1,0 @@
-import osc.helpers
-
-scenario scenario1:
-    do serial:     
-        log("scenario1")
-
-scenario scenario2:
-    do serial:
-        log("scenario2")
