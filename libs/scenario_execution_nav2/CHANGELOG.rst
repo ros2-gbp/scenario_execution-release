@@ -2,6 +2,9 @@
 Changelog for package scenario_execution_nav2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.4.0 (2025-11-27)
+------------------
+
 1.3.0 (2025-06-04)
 ------------------
 * example_nav2: use loopback navigation

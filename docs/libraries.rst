@@ -10,6 +10,8 @@ Beside ``osc.standard`` and ``osc.types`` provided by OpenSCENARIO DSL, multiple
    
    * - Name
      - Description
+   * - ``osc.dataops``
+     - Data Operations Library (provided with :repo_link:`libs/scenario_execution_dataops`)
    * - ``osc.docker``
      - Docker Library (provided with :repo_link:`libs/scenario_execution_docker`)
    * - ``osc.gazebo``
@@ -22,17 +24,65 @@ Beside ``osc.standard`` and ``osc.types`` provided by OpenSCENARIO DSL, multiple
      - ROS Moveit2  manipulation stack Library (provided with :repo_link:`libs/scenario_execution_moveit2`)
    * - ``osc.nav2``
      - ROS Nav2 navigation stack Library (provided with :repo_link:`libs/scenario_execution_nav2`)
+   * - ``osc.network``
+     - Network Library (provided with :repo_link:`libs/scenario_execution_network`)
    * - ``osc.os``
      - Library to interact with the operating system (provided with :repo_link:`libs/scenario_execution_os`)
    * - ``osc.robotics``
      - Robotics Library (provided with :repo_link:`scenario_execution`)
    * - ``osc.ros``
      - ROS Library (provided with :repo_link:`scenario_execution_ros`)
+   * - ``osc.sim``
+     - Simulation Library (provided with :repo_link:`scenario_execution_sim`)
    * - ``osc.x11``
      - X11 Library (provided with :repo_link:`libs/scenario_execution_x11`)
 
 Additional features can be implemented by defining your own library.
 
+
+Data Operations
+---------------
+
+The library contains actions for data operations like manipulating YAML files. Import it with ``import osc.dataops``. It's provided by the package :repo_link:`libs/scenario_execution_dataops`.
+
+``set_yaml_value()``
+^^^^^^^^^^^^^^^^^^^^
+
+Set a value within a YAML file. The value is specified by a dot-separated path (e.g., ``config.database.host`` to access the ``host`` key within ``config.database``). The value type can be explicitly specified to ensure proper type conversion.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``file_path``
+     - ``string``
+     -
+     - Path to the YAML file
+   * - ``output_file``
+     - ``string``
+     - ``""``
+     - Optional output file path. If empty, the input file is modified in place
+   * - ``key_path``
+     - ``string``
+     -
+     - Path to the value in YAML using dot notation (e.g., ``config.database.host``)
+   * - ``value``
+     - ``string``
+     -
+     - Value to set
+   * - ``value_type``
+     - ``string``
+     - ``str``
+     - Type of the value. Allowed values: ``str``, ``int``, ``float``, ``bool``, ``list``, ``dict``
+   * - ``create_missing``
+     - ``bool``
+     - ``true``
+     - Whether to create missing keys in the path
 
 Docker
 ------
@@ -324,6 +374,36 @@ Spawn an actor within simulation.
 
     If the file ending is ``.xacro`` the model is forwarded to `xacro <https://wiki.ros.org/xacro>`__ before getting spawned.
 
+``spawn_multiple()``
+^^^^^^^^^^^^^^^^^^^^
+
+Spawn multiple actors within simulation at once.
+Each ``spawn_entity`` in the ``entities`` list has the following structure:
+    
+    - ``entity_name``: Name of the entity in simulation (string)
+    - ``spawn_pose``: Position and orientation where the object gets spawned (pose_3d)
+    - ``model``: Model definition (string) - supports the same formats as ``osc_object.spawn()``
+    - ``xacro_arguments``: Optional comma-separated list of argument key:=value pairs (string)
+
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+   
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``entities``
+     - ``list of spawn_entity``
+     -
+     - List of entities to spawn, where each ``spawn_entity`` contains ``entity_name`` (string), ``pose`` (pose_3d), ``model`` (string), and optional ``xacro_arguments`` (string)
+   * - ``world_name``
+     - ``string``
+     - ``default``
+     - Gazebo world name
+
 ``wait_for_sim()``
 ^^^^^^^^^^^^^^^^^^
 
@@ -352,6 +432,21 @@ Helpers
 -------
 
 The library contains basic helper methods. Import it with ``import osc.helpers``.
+
+External Methods
+^^^^^^^^^^^^^^^^
+
+.. list-table:: 
+   :widths: 30 70
+   :header-rows: 1
+   :class: tight-table   
+   
+   * - External Method
+     - Description
+   * - ``get_scenario_file_directory()``
+     - Return the absolute path to the directory where the scenario file is located in.
+   * - ``get_output_directory()``
+     - Returns the absolute path to the output directory.
 
 Modifiers
 ^^^^^^^^^
@@ -1072,6 +1167,35 @@ Use nav2 to navigate to goal pose.
      - ``false``
      -  succeed on goal acceptance
 
+Network
+-------
+
+The library contains actions to interact with the network. Import it with ``import osc.network``. It is provided by the package :repo_link:`libs/scenario_execution_network`.
+
+``http_get()``
+^^^^^^^^^^^^^^
+
+Perform an HTTP GET request to the specified URL.
+
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+   
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``url``
+     - ``string``
+     -
+     - URL to send the GET request to
+   * - ``parameters``
+     - ``list of key_value``
+     -
+     - Optional query parameters for the request
+
 OS
 --
 
@@ -1113,6 +1237,30 @@ Report success if a file exists.
      - ``string``
      -
      - File to check
+
+
+``check_process_running()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Report success if a process is running.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``process_name``
+     - ``string``
+     -
+     - Name of the process to check
+   * - ``regex``
+     - ``bool``
+     - ``false``
+     - If true, the process_name is treated as a regular expression
 
 
 Robotics
@@ -1334,7 +1482,10 @@ Play back a ROS bag.
 ``bag_record()``
 ^^^^^^^^^^^^^^^^
 
-Record a ROS bag, stored in directory ``output_dir`` defined by command-line parameter (default: ``.``). If ``topics`` is specified, this action waits for all topics to be subscribed until it returns with success otherwise it immediately returns. The recording is active until the end of the scenario.
+Record a ROS bag, stored in directory ``output_dir``, defined by command-line parameter (default: ``.``). 
+If ``timestamp_suffix`` is set to ``true``, the ROS bag directory ``rosbag2`` will be suffixed with a timestamp. If ``timestamp_suffix`` is set to ``false``, the ROS bag directory might get overwritten.
+
+If ``topics`` is specified, this action waits for all topics to be subscribed until it returns with success otherwise it immediately returns. The recording is active until the end of the scenario.
 
 A common topic to record is ``/scenario_execution/snapshots`` which publishes changes within the behavior tree. When replaying the bag-file, this allows to visualize the current state of the scenario in RViz, using the ``scenario_execution_rviz`` plugin.
 
@@ -1571,11 +1722,11 @@ Execute a ROS launch file.
    * - ``package_name``
      - ``string``
      - 
-     - Package that contains the launch file
+     - Package that contains the launch file, or empty if the launch file is specified as a path
    * - ``launch_file``
      - ``string``
      - 
-     - Launch file name
+     - launch file name, if the package_name is empty the launch_file is used as a path (either an absolute path or relative to the scenario file)
    * - ``arguments``
      - ``list of key_value``
      -
@@ -1902,6 +2053,165 @@ Wait for topics to get available (i.e. publisher gets available).
      - List of topics to wait for
 
 
+Simulation
+----------
+
+The library contains actions to interact with simulation environments. Import it with ``import osc.sim``. It is provided by the package :repo_link:`libs/scenario_execution_sim`.
+
+``delete_entity()``
+^^^^^^^^^^^^^^^^^^^
+
+Remove an entity (a robot or other object) from the simulation.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``entity``
+     - ``string``
+     -
+     - Entity identified by its unique name with a namespace, as returned by SpawnEntity or GetEntities
+
+``load_world()``
+^^^^^^^^^^^^^^^^
+
+Load a world into the simulation.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``uri``
+     - ``string``
+     -
+     - World to load
+
+``reset_simulation()``
+^^^^^^^^^^^^^^^^^^^^^^
+
+Reset the simulation to the start.
+
+``set_entity_state()``
+^^^^^^^^^^^^^^^^^^^^^^
+
+Set the state of a specific entity in the simulation.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``entity``
+     - ``string``
+     -
+     - Entity identified by its unique name
+   * - ``pose``
+     - ``pose_3d``
+     - ``pose_3d()``
+     - 3D pose of the entity
+   * - ``twist``
+     - ``velocity_6d``
+     - ``velocity_6d()``
+     - 6D velocity of the entity
+   * - ``acceleration``
+     - ``acceleration_6d``
+     - ``acceleration_6d()``
+     - 6D acceleration of the entity
+
+``set_simulation_state()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Set the state of the simulation.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``state``
+     - ``simulation_state``
+     -
+     - Simulation state to set. Allowed values: ``simulation_state!stopped``, ``simulation_state!playing``, ``simulation_state!paused``
+
+``spawn_entity()``
+^^^^^^^^^^^^^^^^^^
+
+Spawn an entity in the simulation.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``entity_name``
+     - ``string``
+     -
+     - Name to give to the spawned entity
+   * - ``uri``
+     - ``string``
+     -
+     - URI of the resource to spawn
+   * - ``initial_pose``
+     - ``pose_3d``
+     -
+     - Initial pose for the entity
+   * - ``allow_renaming``
+     - ``bool``
+     - ``false``
+     - Whether to allow renaming if name is not unique
+   * - ``entity_namespace``
+     - ``string``
+     - ``''``
+     - Namespace for the entity
+
+``step_simulation()``
+^^^^^^^^^^^^^^^^^^^^^
+
+Step the simulation a specific number of steps.
+
+.. list-table::
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``steps``
+     - ``int``
+     - ``1``
+     - Number of steps to simulate
+
+``unload_world()``
+^^^^^^^^^^^^^^^^^^
+
+Unload the current world from the simulation.
+
+
+
 X11
 ---
 
@@ -1924,7 +2234,7 @@ Capture the screen content within a video.
    * - ``output_filename``
      - ``string``
      - ``capture.mp4``
-     - Name of the resulting video file (use ``--output-dir`` command-line argument to store the file within a specific directory)
+     - Name of the resulting video file (use ``--output-dir`` command-line argument to store the file within a specific directory). Supports ``.mp4`` (libx264 codec) and ``.webm`` (libvpx codec) formats.
    * - ``frame_rate``
      - ``float``
      - ``25.0``
