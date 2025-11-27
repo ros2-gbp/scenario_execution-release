@@ -46,6 +46,7 @@ class RosBagRecord(RunProcess):
         self.command = None
         self.output_dir = None
         self.topics = None
+        self.missing_topics = None
 
     def setup(self, **kwargs):
         """
@@ -67,8 +68,16 @@ class RosBagRecord(RunProcess):
 
         if timestamp_suffix:
             self.bag_dir += '_' + datetime.now().strftime("%Y_%m_%d-%H_%M_%S")
+        else:
+            if os.path.exists(self.bag_dir):
+                self.logger.info(f"Bag directory {self.bag_dir} already exists. Removing it.")
+                shutil.rmtree(self.bag_dir)
 
         self.topics = topics
+        if topics:
+            self.missing_topics = topics.copy()
+        else:
+            self.missing_topics = None
         self.command = ["ros2", "bag", "record"]
         if hidden_topics:
             self.command.append("--include-hidden-topics")
@@ -106,6 +115,11 @@ class RosBagRecord(RunProcess):
                         self.feedback_message = f"Recording..."  # pylint: disable= attribute-defined-outside-init
                         self.current_state = RosBagRecordActionState.RECORDING
                         return py_trees.common.Status.SUCCESS
+                    elif self.missing_topics and 'Subscribed to topic ' in line:
+                        topic = line.split("'")[1]
+                        if topic in self.missing_topics:
+                            self.missing_topics.remove(topic)
+                            self.feedback_message = f"Waiting for topics: {', '.join(self.missing_topics)}"  # pylint: disable= attribute-defined-outside-init
                 except IndexError:
                     break
             return py_trees.common.Status.RUNNING

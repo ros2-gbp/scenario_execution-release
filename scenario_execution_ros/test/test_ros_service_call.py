@@ -58,6 +58,10 @@ class TestRosServiceCall(unittest.TestCase):
         self.scenario_execution_ros.run()
 
     def tearDown(self):
+        # Stop the executor thread cleanly
+        self.executor.shutdown()
+        self.executor_thread.join(timeout=1)
+        # Clean up node and shutdown rclpy
         self.node.destroy_node()
         rclpy.try_shutdown()
 
