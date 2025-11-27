@@ -25,7 +25,7 @@ from setuptools import setup
 PACKAGE_NAME = 'message_modification'
 setup(
     name=PACKAGE_NAME,
-    version='1.3.0',
+    version='1.4.0',
     packages=[PACKAGE_NAME],
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + PACKAGE_NAME]),
@@ -34,8 +34,8 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Intel Labs',
-    maintainer_email='scenario-execution@intel.com',
+    maintainer='Frederik Pasch',
+    maintainer_email='fred-labs@mailbox.org',
     description='Message modification',
     license='Apache License 2.0',
     entry_points={
