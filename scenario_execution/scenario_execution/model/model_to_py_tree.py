@@ -22,6 +22,7 @@ from importlib.metadata import entry_points
 import inspect
 
 from scenario_execution.model.types import KeepConstraintDeclaration, visit_expression, ActionDeclaration, BinaryExpression, EventReference, Expression, FunctionApplicationExpression, ModifierInvocation, ScenarioDeclaration, DoMember, WaitDirective, EmitDirective, BehaviorInvocation, EventCondition, EventDeclaration, RelationExpression, LogicalExpression, ElapsedExpression, PhysicalLiteral, ModifierDeclaration
+from scenario_execution.clock_behaviors import ClockTimer, ClockTimeout
 from scenario_execution.model.model_base_visitor import ModelBaseVisitor
 from scenario_execution.model.error import OSC2ParsingError
 from scenario_execution.actions.base_action import BaseAction
@@ -214,8 +215,30 @@ class ModelToPyTree(object):
             available_modifiers = ["repeat", "inverter", "timeout", "retry", "failure_is_running", "failure_is_success",
                                    "running_is_failure", "running_is_success", "success_is_failure", "success_is_running"]
             if node.name not in available_modifiers:
+                # fall back to installed modifier plugins
+                modifier_eps = entry_points(group='scenario_execution.modifiers')
+                for ep in modifier_eps:
+                    if ep.name == node.name:
+                        factory = ep.load()
+                        instance = factory(self.__cur_behavior, resolved_values)
+                        parent = self.__cur_behavior.parent
+                        if parent:
+                            parent.children.remove(self.__cur_behavior)
+                        if isinstance(parent, py_trees.composites.Composite):
+                            parent.add_child(instance)
+                        elif isinstance(parent, py_trees.decorators.Decorator):
+                            parent.children.append(instance)
+                            parent.decorated = instance
+                        elif not parent:
+                            instance.name = self.__cur_behavior.name
+                            self.__cur_behavior.parent = instance
+                            self.tree = instance
+                        else:
+                            raise OSC2ParsingError(
+                                msg=f'Modifier "{node.name}" found at unsupported location.', context=node.get_ctx())
+                        return
                 raise OSC2ParsingError(
-                    msg=f'Unknown modifier "{node.name}". Available modifiers {available_modifiers}.', context=node.get_ctx())
+                    msg=f'Unknown modifier "{node.name}". Available built-in modifiers: {available_modifiers}. No plugin found either.', context=node.get_ctx())
             parent = self.__cur_behavior.parent
             if parent:
                 parent.children.remove(self.__cur_behavior)
@@ -224,7 +247,7 @@ class ModelToPyTree(object):
             elif node.name == "inverter":
                 instance = py_trees.decorators.Inverter(name="inverter", child=self.__cur_behavior)
             elif node.name == "timeout":
-                instance = py_trees.decorators.Timeout(name="timeout", child=self.__cur_behavior, duration=resolved_values["duration"])
+                instance = ClockTimeout(name="timeout", child=self.__cur_behavior, duration=resolved_values["duration"])
             elif node.name == "retry":
                 instance = py_trees.decorators.Retry(name="retry", child=self.__cur_behavior, num_failures=resolved_values["count"])
             elif node.name == "failure_is_running":
@@ -240,7 +263,7 @@ class ModelToPyTree(object):
             elif node.name == "success_is_running":
                 instance = py_trees.decorators.SuccessIsRunning(name="success_is_running", child=self.__cur_behavior)
             else:
-                raise ValueError('unknown.')
+                raise ValueError('unknown modifier (should not reach here).')
 
             if isinstance(parent, py_trees.composites.Composite):
                 parent.add_child(instance)
@@ -352,9 +375,14 @@ class ModelToPyTree(object):
                             final_args["associated_actor"]["name"] = node.actor.name
 
                         instance = behavior_cls(**final_args)
+                        remote_init_args = final_args
                     else:
                         instance = behavior_cls()
+                        remote_init_args = {}
                     instance._set_base_properities(action_name, node, self.logger)  # pylint: disable=protected-access
+                    # attributes used by scenario_execution_remote modifier
+                    instance._external_plugin_key = available_plugins[0].name  # pylint: disable=protected-access
+                    instance._external_init_args = remote_init_args  # pylint: disable=protected-access
                 except Exception as e:
                     raise OSC2ParsingError(msg=f'Error while initializing plugin {behavior_name}: {e}', context=node.get_ctx()) from e
                 self.__cur_behavior.add_child(instance)
@@ -380,7 +408,7 @@ class ModelToPyTree(object):
                     expression = ExpressionBehavior(name=node.get_ctx()[2], expression=self.visit(child), model=node, logger=self.logger)
                 elif isinstance(child, ElapsedExpression):
                     elapsed_condition = self.visit_elapsed_expression(child)
-                    expression = py_trees.timers.Timer(name=f"wait {elapsed_condition}s", duration=float(elapsed_condition))
+                    expression = ClockTimer(name=f"wait {elapsed_condition}s", duration=float(elapsed_condition))
                 else:
                     raise OSC2ParsingError(
                         msg=f'Invalid event condition {child}', context=node.get_ctx())
