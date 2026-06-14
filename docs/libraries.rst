@@ -1167,6 +1167,41 @@ Use nav2 to navigate to goal pose.
      - ``false``
      -  succeed on goal acceptance
 
+``differential_drive_robot.follow_waypoints()``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use nav2 to follow waypoints.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+   
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``goal_pose``
+     - ``pose_3d``
+     - 
+     - Goal pose to navigate to
+   * - ``loop_count``
+     - ``int``
+     - ``1``
+     - Loop count
+   * - ``namespace_override``
+     - ``string``
+     -
+     - If set, it's used as namespace (instead of the associated actor's namespace)
+   * - ``action_topic``
+     - ``string``
+     - ``follow_waypoints``
+     - Action name
+   * - ``success_on_acceptance``
+     - ``bool``
+     - ``false``
+     -  succeed on goal acceptance
+
 Network
 -------
 
@@ -1261,6 +1296,34 @@ Report success if a process is running.
      - ``bool``
      - ``false``
      - If true, the process_name is treated as a regular expression
+
+
+``monitor_resources()``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Monitor CPU and memory usage of the current process and all its children, writing metrics to a CSV file in the output directory. The action runs continuously until the scenario ends or is canceled. Metrics are sampled every second.
+
+.. list-table:: 
+   :widths: 15 15 5 65
+   :header-rows: 1
+   :class: tight-table   
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``file_name``
+     - ``string``
+     - ``resource_usage.csv``
+     - Name of the CSV file to write to (placed in output directory)
+   * - ``log_per_process``
+     - ``bool``
+     - ``false``
+     - If true, log each process individually with PID and name; if false, log aggregated totals
+
+**CSV Format (aggregated mode):** ``timestamp,cpu_usage,mem_usage``
+
+**CSV Format (per-process mode):** ``timestamp,pid,name,cpu_usage,mem_usage``
 
 
 Robotics
