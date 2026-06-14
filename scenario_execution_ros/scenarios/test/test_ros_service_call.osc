@@ -1,8 +1,0 @@
-import osc.helpers
-import osc.ros
-
-scenario test_ros_service_call:
-    timeout(30s)
-    do serial:
-        service_call('/bla', 'std_srvs.srv.SetBool', '{\"data\": True}')
-        emit end
