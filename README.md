@@ -1,3 +1,65 @@
+## scenario_execution (jazzy) - 1.5.0-1
+
+The packages in the `scenario_execution` repository were released into the `jazzy` distro by running `/usr/bin/bloom-release --rosdistro jazzy --track jazzy scenario_execution` on `Sun, 14 Jun 2026 14:18:29 -0000`
+
+These packages were released:
+- `scenario_execution`
+- `scenario_execution_control`
+- `scenario_execution_coverage`
+- `scenario_execution_dataops`
+- `scenario_execution_gazebo`
+- `scenario_execution_interfaces`
+- `scenario_execution_nav2`
+- `scenario_execution_network`
+- `scenario_execution_os`
+- `scenario_execution_ros`
+- `scenario_execution_rviz`
+- `scenario_execution_sim`
+- `scenario_execution_x11`
+
+These packages were explicitly ignored:
+- `arm_sim_scenario`
+- `example_external_method`
+- `example_library`
+- `example_nav2`
+- `example_multi_robot`
+- `example_scenario_control`
+- `example_simulation`
+- `scenario_execution_docker`
+- `scenario_execution_floorplan_dsl`
+- `scenario_execution_kubernetes`
+- `scenario_execution_moveit2`
+- `scenario_execution_pybullet`
+- `gazebo_static_camera`
+- `gazebo_tf_publisher`
+- `tb4_sim_scenario`
+- `tf_to_pose_publisher`
+- `scenario_status`
+- `message_modification`
+- `scenario_execution_docker_test`
+- `scenario_execution_gazebo_test`
+- `scenario_execution_nav2_test`
+- `scenario_execution_ros_test`
+- `scenario_execution_test`
+- `scenario_execution_moveit2`
+
+Version of package(s) in repository `scenario_execution`:
+
+- upstream repository: https://github.com/cps-test-lab/scenario-execution.git
+- release repository: https://github.com/ros2-gbp/scenario_execution-release.git
+- rosdistro version: `1.4.0-1`
+- old version: `1.4.0-1`
+- new version: `1.5.0-1`
+
+Versions of tools used:
+
+- bloom version: `0.14.3`
+- catkin_pkg version: `1.1.0`
+- rosdep version: `0.26.0`
+- rosdistro version: `1.0.1`
+- vcstools version: `0.1.42`
+
+
 ## scenario_execution (jazzy) - 1.4.0-1
 
 The packages in the `scenario_execution` repository were released into the `jazzy` distro by running `/usr/bin/bloom-release --rosdistro jazzy scenario_execution` on `Thu, 27 Nov 2025 13:25:19 -0000`
