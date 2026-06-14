@@ -20,7 +20,7 @@ PACKAGE_NAME = 'scenario_execution_nav2'
 
 setup(
     name=PACKAGE_NAME,
-    version='1.4.0',
+    version='1.5.0',
     packages=find_namespace_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -37,6 +37,7 @@ setup(
     include_package_data=True,
     entry_points={
         'scenario_execution.actions': [
+            'differential_drive_robot.follow_waypoints = scenario_execution_nav2.actions.follow_waypoints:FollowWaypoints',
             'differential_drive_robot.init_nav2 = scenario_execution_nav2.actions.init_nav2:InitNav2',
             'differential_drive_robot.nav_to_pose = scenario_execution_nav2.actions.nav_to_pose:NavToPose',
             'differential_drive_robot.nav_through_poses = scenario_execution_nav2.actions.nav_through_poses:NavThroughPoses',
