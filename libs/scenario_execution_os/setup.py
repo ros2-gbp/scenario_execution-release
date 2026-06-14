@@ -21,7 +21,7 @@ PACKAGE_NAME = 'scenario_execution_os'
 
 setup(
     name=PACKAGE_NAME,
-    version='1.4.0',
+    version='1.5.0',
     packages=find_namespace_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -44,6 +44,7 @@ setup(
             'check_file_exists = scenario_execution_os.actions.check_file_exists:CheckFileExists',
             'check_file_not_exists = scenario_execution_os.actions.check_file_not_exists:CheckFileNotExists',
             'check_process_running = scenario_execution_os.actions.check_process_running:CheckProcessRunning',
+            'monitor_resources = scenario_execution_os.actions.monitor_resources:MonitorResources',
         ],
         'scenario_execution.osc_libraries': [
             'os = '
