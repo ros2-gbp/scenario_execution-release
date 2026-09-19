@@ -2,8 +2,11 @@
 Changelog for package scenario_execution_sim
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.6.0 (2026-09-18)
+------------------
+
+1.5.0 (2026-06-14)
+------------------
 * Support step-based simulators
 * Contributors: Frederik Pasch
 
