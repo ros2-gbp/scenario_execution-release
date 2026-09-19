@@ -47,84 +47,96 @@ To run only specific tests:
 Versioning
 ----------
 
-All packages share one version, kept in both ``package.xml`` and ``setup.py``. Bump it
-across the whole workspace with a single command:
-
-.. code-block:: bash
-
-   make set_version VERSION=1.6.0    # set an explicit version
-   make set_version VERSION=minor    # or bump major|minor|patch from the current version
-
-This updates every source ``package.xml`` and ``setup.py`` (the canonical version is read
-from ``scenario_execution/package.xml``). Review the diff, update the ``CHANGELOG.rst``
-headings, then commit and tag, e.g. ``git commit -am 1.6.0 && git tag 1.6.0``.
+The version lives in ``package.xml`` and nowhere else: every ``setup.py`` reads its own
+package's ``package.xml``, so the two cannot disagree and a release changes one file per
+package. Which packages a release touches is decided by that version, too — a package at the
+release version is released, one at ``0.0.0`` never is (the examples, the ``*_test``
+packages, the simulation helpers, the tools, and the libraries kept out of the ROS build
+farm). ``make release-list`` prints both sets. A new package goes to one or the other on
+purpose, and to the release repository's ``jazzy.ignored`` if it is the latter (see below).
 
 Changelog
 ---------
 
-Each package keeps a ``CHANGELOG.rst`` in the ROS (``catkin``) format. It is the single
-source of truth for both the ROS release (consumed by ``bloom``) and the PyPI release: the
-``scenario_execution`` package ships its ``CHANGELOG.rst`` in the sdist and links to it from
-PyPI via the ``Changelog`` project URL, so there is no separate file to keep in sync.
-
-Update the changelogs from the git history before tagging a release:
-
-.. code-block:: bash
-
-   catkin_generate_changelog --all   # fills the "Forthcoming" section of every CHANGELOG.rst
-   # review/edit the entries, then set the version + date heading
+Each released package keeps a ``CHANGELOG.rst`` in the ROS (``catkin``) format. It is the
+single source of truth for both the ROS release (consumed by ``bloom``) and the PyPI
+release: the ``scenario_execution`` package ships its ``CHANGELOG.rst`` in the sdist and
+links to it from PyPI via the ``Changelog`` project URL. The entries are generated from the
+git history at release time — one line per commit, its subject, so write subjects that read
+as changelog lines. The ``Forthcoming`` section is what the next release names.
 
 Releasing
 ---------
 
-A release goes to two places from the same version and changelogs: PyPI (the core
-``scenario_execution`` package) and the ROS build farm (the ROS packages). The changelog
-and version bump go through a pull request; tagging and publishing happen on ``main``
-**after** that pull request is merged.
+A release goes to two places from one version: PyPI (the core ``scenario-execution``
+distribution, published by CI from the tag) and the ROS build farm (the ROS packages, via
+``bloom``, by hand after the tag). It is one generated pull request, one candidate tried by
+hand, one tag, and bloom — four ``make`` targets, each printing the next.
 
-First, prepare the release on a branch and open a pull request:
+1. **Prepare.** On a branch from a clean ``main``:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   make release_tools                  # 0. one-time: install the PyPI build tooling (build + twine)
+      make release-prepare VERSION=1.6.0    # or VERSION=minor: major|minor|patch from the current
 
-   git switch -c release-1.6.0
-   make ros_changelog                  # 1. fill each CHANGELOG.rst from git history;
-                                       #    then edit every "Forthcoming" -> "<version> (<date>)"
-   make set_version VERSION=minor      # 2. bump version across all package.xml + setup.py
-                                       #    (or VERSION=1.6.0 for an explicit version)
-   make release_test                   # 3. dry run: build, validate, and upload to TestPyPI
-   git commit -am "Release 1.6.0" && git push -u origin release-1.6.0   # 4. open a PR, get it reviewed + merged
+   This fills each released package's ``CHANGELOG.rst`` from the git history since the
+   last tag, names that section ``1.6.0 (today)``, and sets ``<version>`` in the released
+   ``package.xml`` files — and nothing else. Review the diff (the changelog entries are commit
+   subjects; edit them where a subject says less than a reader needs), then commit and open
+   the pull request. It needs ``catkin_pkg`` (``pip install catkin_pkg``).
 
-Then, once the pull request is merged, tag and publish from ``main``:
+2. **Try it.** Once the pull request is merged:
 
-.. code-block:: bash
+   .. code-block:: bash
 
-   git switch main && git pull
-   git tag 1.6.0 && git push origin 1.6.0   # 5. tag the merged release commit
+      make release-rc VERSION=1.6.0
 
-   make release                        # 6. publish to PyPI
+   This checks the commit (on ``main``, CI green, ``package.xml`` at 1.6.0, every package
+   either released or in the release repository's ``jazzy.ignored``), publishes the wheel as
+   ``1.6.0rcN`` to TestPyPI through the publish workflow, and lays out a **bloom rehearsal**:
+   a scratch clone of the release repository pointed at a clean clone of the commit, with
+   bloom and rosdep in a venv of their own. It prints two things to run by hand — a
+   ``pip install`` of the candidate from TestPyPI, and one ``bloom-release --pretend`` line
+   that performs the entire build-farm release and pushes nothing. Something wrong is a fix
+   on ``main`` and the next candidate; nothing has been consumed.
 
-   make ros_release ROS_DISTRO=jazzy   # 7. publish to the ROS build farm (bloom)
+3. **Tag.** When both hold:
+
+   .. code-block:: bash
+
+      make release-final VERSION=1.6.0 COMMIT=<the commit the candidate was built from>
+
+   The same checks, plus a candidate on TestPyPI, then the two tags on that commit, both
+   lightweight — bloom exports from ``jazzy-1.6.0``, and ``git describe`` must keep answering
+   with the bare ``1.6.0`` (it prefers an annotated tag, and the changelog generator refuses
+   one of the other shape). The push of ``1.6.0`` is what publishes to PyPI:
+   ``.github/workflows/publish.yml`` builds the wheel at the version ``package.xml`` says,
+   uploads it with trusted publishing, and installs it back from the index.
+
+4. **The ROS build farm.** Printed by the previous step; with both tags on the upstream and
+   ``main`` still at this version:
+
+   .. code-block:: bash
+
+      make ros_release ROS_DISTRO=jazzy
+
+   ``bloom-release`` is interactive, needs a current bloom and the release repository, reads
+   the version from the tip of ``main``, and opens the ``rosdistro`` pull request. It releases
+   every package it finds in the upstream **except** those named in the release repository's
+   ``jazzy.ignored``, and then insists the rest share one version — which is why the ``0.0.0``
+   set and ``jazzy.ignored`` must agree, and why the rehearsal in step 2 exists.
 
 Notes:
 
-- ``make release`` (and ``release_test``) first checks that the versions in
-  ``scenario_execution/setup.py`` and ``scenario_execution/package.xml`` match, builds the
-  sdist/wheel and validates them. Use ``make release_check`` to build and validate without
-  uploading. Upload credentials are taken from twine (e.g. ``~/.pypirc`` or the
-  ``TWINE_USERNAME``/``TWINE_PASSWORD`` environment variables).
-- ``make ros_release`` is interactive, needs a configured release repository, and opens a
-  ``rosdistro`` pull request. It takes the rosdistro *repository* key (``ROS_REPO``,
-  default ``scenario_execution``), not individual package names; ``ROS_DISTRO`` defaults to
-  ``jazzy``.
-- Only a subset of the workspace is published to ROS; the rest (examples, ``*_test``
-  packages, simulation helpers, and the docker/kubernetes/moveit2/pybullet/floorplan_dsl
-  libraries) are intentionally **not** released. The released set is listed in
-  ``ROS_RELEASE_PACKAGES`` in the ``Makefile`` and must mirror the ``release/packages`` list
-  for this repository in `rosdistro <https://github.com/ros/rosdistro>`_. Run
-  ``make ros_release_packages`` to print the released vs. disabled split before opening a
-  rosdistro pull request, and keep the disabled packages out of that list.
+- An upload to PyPI cannot be replaced, only yanked, and ``pip`` still installs a yanked wheel
+  when pinned exactly. That is why the candidate goes to TestPyPI first, and why a broken
+  release is followed by the next number, never by a re-upload.
+- Only a subset of the workspace is published anywhere. What is released is what carries
+  the version; ``make release-list`` is the list, and it must mirror the ``release/packages``
+  list for this repository in `rosdistro <https://github.com/ros/rosdistro>`_ — that list is
+  what bloom produces from the non-ignored packages.
+- ``catkin_prepare_release`` does not apply to this repository: it wants a literal version in
+  every ``setup.py``, which is exactly the duplication that ``package.xml`` alone avoids.
 
 Developing and Debugging with Visual Studio Code
 ------------------------------------------------
