@@ -22,3 +22,4 @@ scenario_execution_nav2_test
 scenario_execution_ros_test
 scenario_execution_test
 scenario_execution_moveit2
+scenario_execution_mcp
