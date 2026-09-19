@@ -1,0 +1,74 @@
+ros-jazzy-scenario-execution-ros (1.6.0-1noble) noble; urgency=high
+
+  * A cancelled recording is closed, not killed (#111 <https://github.com/cps-test-lab/scenario-execution/issues/111>)
+  * bag_record: record a listed hidden topic without a flag (#102 <https://github.com/cps-test-lab/scenario-execution/issues/102>)
+  * Measure a scenario's durations on simulated time under use_sim_time (#104 <https://github.com/cps-test-lab/scenario-execution/issues/104>)
+  * Give an adjusted QoS preset a profile of its own (#100 <https://github.com/cps-test-lab/scenario-execution/issues/100>)
+  * Keep the traceback when a scenario run fails (#92 <https://github.com/cps-test-lab/scenario-execution/issues/92>)
+  * Skip an empty launch-argument value instead of aborting the whole launch (#90 <https://github.com/cps-test-lab/scenario-execution/issues/90>)
+  * Cancel a long-running action mid-scenario, not only at teardown (#85 <https://github.com/cps-test-lab/scenario-execution/issues/85>)
+  * Record how fast the tree ticked, and which behavior spent the time (#84 <https://github.com/cps-test-lab/scenario-execution/issues/84>)
+  * Add assert_realtime_factor() to compare the ROS clock against wall time (#83 <https://github.com/cps-test-lab/scenario-execution/issues/83>)
+  * Fix check_data comparing messages received before the action starts (#80 <https://github.com/cps-test-lab/scenario-execution/issues/80>)
+  * Tracing (#76 <https://github.com/cps-test-lab/scenario-execution/issues/76>)
+  * variable parent frame in tf_close_to action (#72 <https://github.com/cps-test-lab/scenario-execution/issues/72>)
+  * Contributors: Florian Mirus, fred-labs
+  * Fix ``--step-duration`` being ignored: the tick period was always the 0.1s default
+
+ -- "Frederik Pasch" <scenario-execution@intel.com>  Thu, 17 Sep 2026 22:00:00 -0000
+
+ros-jazzy-scenario-execution-ros (1.5.0-1noble) noble; urgency=high
+
+  * Support step-based simulators
+  * Shutdown timeout (#64 <https://github.com/cps-test-lab/scenario-execution/issues/64>)
+  * support multiple --post-run (#63 <https://github.com/cps-test-lab/scenario-execution/issues/63>)
+  * Update pytrees version (#53 <https://github.com/cps-test-lab/scenario-execution/issues/53>)
+  * Contributors: Adi Vardi, Frederik Pasch
+
+ -- "Frederik Pasch" <scenario-execution@intel.com>  Sat, 13 Jun 2026 22:00:00 -0000
+
+ros-jazzy-scenario-execution-ros (1.4.0-1noble) noble; urgency=high
+
+  * rosbag_record: report missing topics
+  * add post command execution
+  * ros2: bag_record is able to remove previous bag directory
+  * ros_launch: support launch file without package
+  * fix nav_through_poses
+
+ -- "Frederik Pasch" <scenario-execution@intel.com>  Wed, 26 Nov 2025 23:00:00 -0000
+
+ros-jazzy-scenario-execution-ros (1.3.0-1noble) noble; urgency=high
+
+  * add ros examples and new actions
+  * update run_process action to send signals to whole process group
+
+ -- "Frederik Pasch" <scenario-execution@intel.com>  Tue, 03 Jun 2025 22:00:00 -0000
+
+ros-jazzy-scenario-execution-ros (1.2.1-1noble) noble; urgency=high
+
+  * update py-trees dependency
+  * update from OpenSCENARIO 2.0 to OpenSCENARIO DSL V2.1.0
+
+ -- "Frederik Pasch" <scenario-execution@intel.com>  Mon, 26 May 2025 22:00:00 -0000
+
+ros-jazzy-scenario-execution-ros (1.2.0-1noble) noble; urgency=high
+
+  * check_data_external: add action to check with custom python function
+  * rename record_bag to bag_record, add bag_play
+  * action_call: fix shutdown
+  * action_call: add parameter to succeed on goal acceptance
+  * Support usage of ros messages as parameters
+  * add action: wait_for_nodes
+  * Service_call_qos
+  * Fix service_call with repeat() modifier
+  * Add topic_monitor action
+  * Add ros_launch action
+  * bugfix in ros_topic_wait_for_topics action
+  * Add action: action_call
+  * action_assert_lifecycle_state
+  * Action assert_tf_moving
+  * Action topic frequency
+
+ -- "Frederik Pasch" <scenario-execution@intel.com>  Tue, 01 Oct 2024 22:00:00 -0000
+
+
