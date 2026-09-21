@@ -1,5 +1,0 @@
-include scenario_execution/lib_osc/*.osc
-include CHANGELOG.rst
-include README.md
-include package.xml
-
