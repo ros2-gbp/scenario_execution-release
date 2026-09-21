@@ -1,0 +1,27 @@
+ros-jazzy-scenario-execution-sim (1.7.0-1noble) noble; urgency=high
+
+  * The same source builds on Jazzy and Lyrical (#115 <https://github.com/cps-test-lab/scenario-execution/issues/115>)
+  * Contributors: fred-labs
+
+ -- "Frederik Pasch" <fred-labs@mailbox.org>  Sun, 20 Sep 2026 22:00:00 -0000
+
+ros-jazzy-scenario-execution-sim (1.6.0-1noble) noble; urgency=high
+
+
+
+ -- "Frederik Pasch" <fred-labs@mailbox.org>  Thu, 17 Sep 2026 22:00:00 -0000
+
+ros-jazzy-scenario-execution-sim (1.5.0-1noble) noble; urgency=high
+
+  * Support step-based simulators
+  * Contributors: Frederik Pasch
+
+ -- "Frederik Pasch" <fred-labs@mailbox.org>  Sat, 13 Jun 2026 22:00:00 -0000
+
+ros-jazzy-scenario-execution-sim (1.4.0-1noble) noble; urgency=high
+
+  * Initial creation
+
+ -- "Frederik Pasch" <fred-labs@mailbox.org>  Wed, 26 Nov 2025 23:00:00 -0000
+
+
