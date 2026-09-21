@@ -52,11 +52,11 @@ tracks:
     - git-bloom-generate -y rosdebian --prefix release/:{ros_distro} :{ros_distro}
       -i :{release_inc} --os-name ubuntu
     devel_branch: main
-    last_release: jazzy-1.6.0
-    last_version: 1.6.0
+    last_release: lyrical-1.7.0
+    last_version: 1.7.0
     name: upstream
     patches: null
-    release_inc: '2'
+    release_inc: '1'
     release_repo_url: null
     release_tag: lyrical-:{version}
     ros_distro: lyrical
