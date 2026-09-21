@@ -58,8 +58,8 @@ tracks:
     patches: null
     release_inc: '2'
     release_repo_url: null
-    release_tag: jazzy-:{version}
-    ros_distro: jazzy
+    release_tag: lyrical-:{version}
+    ros_distro: lyrical
     vcs_type: git
     vcs_uri: https://github.com/cps-test-lab/scenario-execution.git
     version: :{auto}
