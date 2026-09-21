@@ -1,0 +1,12 @@
+Source: ros-lyrical-scenario-execution-ros
+Section: misc
+Priority: optional
+Maintainer: "Frederik Pasch" <scenario-execution@intel.com>
+Build-Depends: debhelper (>= 9.0.0), python3-pytest <!nocheck>, ros-lyrical-ament-copyright <!nocheck>, ros-lyrical-ament-flake8 <!nocheck>, ros-lyrical-ament-pep257 <!nocheck>, ros-lyrical-scenario-execution, ros-lyrical-ros-workspace, python3-all, python3-setuptools, dh-python
+Homepage: https://index.ros.org/p/scenario_execution_ros/#lyrical
+Standards-Version: 3.9.2
+
+Package: ros-lyrical-scenario-execution-ros
+Architecture: any
+Depends: ${python3:Depends}, ${misc:Depends}, python3-transforms3d, ros-lyrical-py-trees, ros-lyrical-py-trees-ros, ros-lyrical-py-trees-ros-interfaces, ros-lyrical-rcl-interfaces, ros-lyrical-rclpy, ros-lyrical-rosgraph-msgs, ros-lyrical-scenario-execution, ros-lyrical-visualization-msgs, ros-lyrical-xacro, ros-lyrical-ros-workspace
+Description: Scenario Execution for ROS
