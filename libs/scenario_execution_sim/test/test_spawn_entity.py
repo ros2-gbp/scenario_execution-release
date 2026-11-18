@@ -56,7 +56,7 @@ class TestSpawnEntity(unittest.TestCase):
         parsed_tree = self.parser.parse_input_stream(InputStream(scenario_content))
         model = self.parser.create_internal_model(parsed_tree, self.tree, "test.osc", False)
         self.tree = create_py_tree(model, self.tree, self.parser.logger, False)
-        self.scenario_execution_ros.scenarios_list = [(self.tree, {}, None)]
+        self.scenario_execution_ros.scenarios_list = [(self.tree, {}, None, {})]
         self.scenario_execution_ros.run()
 
     def tearDown(self):
@@ -86,3 +86,22 @@ scenario test_spawn_entity:
         self.execute(scenario_content)
         self.assertTrue(self.scenario_execution_ros.process_results())
         self.assertTrue(self.request_received is not None)
+
+    def test_name_and_pose_may_be_omitted(self):
+        scenario_content = """
+import osc.helpers
+import osc.sim
+
+scenario test_spawn_entity:
+    timeout(10s)
+    do serial:
+        spawn_entity(uri: 'test_uri')
+"""
+        self.execute(scenario_content)
+        self.assertTrue(self.scenario_execution_ros.process_results())
+        request = self.request_received
+        uri = request.entity_resource.uri if hasattr(request, 'entity_resource') else request.uri
+        self.assertEqual(uri, 'test_uri')
+        self.assertEqual(request.name, '')
+        self.assertEqual(request.initial_pose.pose.position.x, 0.0)
+        self.assertEqual(request.initial_pose.pose.orientation.w, 1.0)
