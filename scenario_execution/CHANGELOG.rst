@@ -2,6 +2,28 @@
 Changelog for package scenario_execution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.9.0 (2026-11-18)
+------------------
+* A serialized model names the source file of each element by its base name (`#150 <https://github.com/cps-test-lab/scenario-execution/issues/150>`_)
+* A .sce model initializes its variables, keeps its source positions and passes its parameters to the runner (`#148 <https://github.com/cps-test-lab/scenario-execution/issues/148>`_)
+* A ``.sce`` model refuses ``--scenario-parameter-file`` and ``--create-scenario-parameter-file-template`` instead of ignoring them, since its parameters are resolved (`#148 <https://github.com/cps-test-lab/scenario-execution/issues/148>`_)
+* A parameter document's _reset mapping carries runner arguments for reset() (`#149 <https://github.com/cps-test-lab/scenario-execution/issues/149>`_)
+* reset() receives the scenario's output directory when it declares output_dir (`#144 <https://github.com/cps-test-lab/scenario-execution/issues/144>`_)
+* retry() without a count retries until the sub-tree succeeds (`#141 <https://github.com/cps-test-lab/scenario-execution/issues/141>`_)
+* wait and until take any boolean expression, and rise() and fall() (`#140 <https://github.com/cps-test-lab/scenario-execution/issues/140>`_)
+* Document waiting until a condition has held for a duration (`#139 <https://github.com/cps-test-lab/scenario-execution/issues/139>`_)
+* Contributors: Florian Mirus, fred-labs
+
+1.8.0 (2026-09-28)
+------------------
+* The action catalog lists enums with their members: ``list_actions`` has an ``enums`` group, each entry carrying ``values``, and ``get_action_details`` finds an enum by name (`#101 <https://github.com/cps-test-lab/scenario-execution/issues/101>`_)
+* ``get_scenario_parameters`` reads a ``.sce`` scenario model file, which failed to parse before, and gives the same parameters as the scenario it was generated from (`#132 <https://github.com/cps-test-lab/scenario-execution/issues/132>`_)
+* A scenario's parse names the files it read (`#129 <https://github.com/cps-test-lab/scenario-execution/issues/129>`_)
+* A misspelled core library import is refused when external imports are skipped (`#131 <https://github.com/cps-test-lab/scenario-execution/issues/131>`_)
+* A relative string import resolves against the importing file's directory (`#130 <https://github.com/cps-test-lab/scenario-execution/issues/130>`_)
+* A scenario model file that cannot be loaded raises, naming the file (`#133 <https://github.com/cps-test-lab/scenario-execution/issues/133>`_)
+* Contributors: fred-labs
+
 1.7.0 (2026-09-21)
 ------------------
 * A recording that could not be closed is stoppable, and says so if it was not (`#119 <https://github.com/cps-test-lab/scenario-execution/issues/119>`_)
