@@ -15,7 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from .types import CompilationUnit, PhysicalTypeDeclaration, UnitDeclaration, EnumDeclaration, EnumMemberDeclaration, EnumValueReference, StructDeclaration, StructInherits, ActionDeclaration, ActionInherits, ActorDeclaration, ActorInherits, FieldAccessExpression,  FloatLiteral, FunctionApplicationExpression, Argument, BehaviorInvocation, BinaryExpression, BoolLiteral, DoDirective, ElapsedExpression, DoMember, EmitDirective,  EventCondition, EventDeclaration, EventFieldDecl, EventReference,  GlobalParameterDeclaration, Identifier, IdentifierReference, IntegerLiteral, KeepConstraintDeclaration,  LogicalExpression, MethodBody, MethodDeclaration, NamedArgument, ParameterDeclaration, PhysicalLiteral, ParameterReference, PositionalArgument,  RelationExpression, ScenarioInherits, SIUnitSpecifier, StringLiteral, ScenarioDeclaration,  Type, VariableDeclaration, UntilDirective, WaitDirective, ListExpression, ModifierDeclaration, ModifierInvocation
+from .types import CompilationUnit, PhysicalTypeDeclaration, UnitDeclaration, EnumDeclaration, EnumMemberDeclaration, EnumValueReference, StructDeclaration, StructInherits, ActionDeclaration, ActionInherits, ActorDeclaration, ActorInherits, FieldAccessExpression,  FloatLiteral, FunctionApplicationExpression, Argument, BehaviorInvocation, BinaryExpression, BoolLiteral, DoDirective, ElapsedExpression, FallExpression, RiseExpression, DoMember, EmitDirective,  EventCondition, EventDeclaration, EventFieldDecl, EventReference,  GlobalParameterDeclaration, Identifier, IdentifierReference, IntegerLiteral, KeepConstraintDeclaration,  LogicalExpression, MethodBody, MethodDeclaration, NamedArgument, ParameterDeclaration, PhysicalLiteral, ParameterReference, PositionalArgument,  RelationExpression, ScenarioInherits, SIUnitSpecifier, StringLiteral, ScenarioDeclaration,  Type, VariableDeclaration, UntilDirective, WaitDirective, ListExpression, ModifierDeclaration, ModifierInvocation
 
 
 from ..osc2_parsing.OpenSCENARIO2Parser import OpenSCENARIO2Parser
@@ -28,6 +28,9 @@ from antlr4.tree.Tree import ParseTreeWalker
 import os
 from importlib.metadata import entry_points
 from importlib.resources import files
+
+# libraries of this package, read even when external imports are skipped
+CORE_LIBRARIES = ('helpers', 'robotics', 'standard', 'types')
 
 
 class ModelBuilder(OpenSCENARIO2Listener):  # pylint: disable=too-many-public-methods
@@ -81,10 +84,12 @@ class ModelBuilder(OpenSCENARIO2Listener):  # pylint: disable=too-many-public-me
     def enterImportReference(self, ctx: OpenSCENARIO2Parser.ImportReferenceContext):
         file = None
         if ctx.StringLiteral():
-            # The literal's own text, with its quotes removed: `getText()` returns them as part
-            # of the token, so the path was opened WITH them and no file import could ever
-            # resolve ('"/tmp/lib.osc"': No such file or directory).
+            # getText() includes the literal's quotes, which are not part of the path
             file = ctx.StringLiteral().getText().strip('"\'')
+            if not os.path.isabs(file):
+                # relative to the importing file, so the result does not depend on the working directory
+                file = os.path.join(os.path.dirname(os.path.abspath(self.current_file)), file)
+            file = os.path.normpath(file)
         if ctx.structuredIdentifier():
             import_reference_string = ""
             for child in ctx.structuredIdentifier().getChildren():
@@ -96,17 +101,14 @@ class ModelBuilder(OpenSCENARIO2Listener):  # pylint: disable=too-many-public-me
                     msg=f'import_reference can only be of format osc.<library-name>, found "{import_reference}', context=ctx)
 
             library_name = ".".join(import_reference[1:])
-            if self.skip_external_imports and library_name not in  ['helpers', 'robotics', 'standard', 'types']:
-                self.logger.debug(f'Skipping external import library: {library_name}')
-                return
-            # iterate through all packages
-            libraries_found = []
-            # Get entry points using importlib.metadata
-            library_eps = entry_points(group='scenario_execution.osc_libraries')
-
-            for entry_point in library_eps:
-                if entry_point.name == library_name:
-                    libraries_found.append(entry_point)
+            libraries_found = [entry_point for entry_point in entry_points(group='scenario_execution.osc_libraries')
+                               if entry_point.name == library_name]
+            if self.skip_external_imports and library_name not in CORE_LIBRARIES:
+                # An external library is skipped whether or not it is installed, so only a name
+                # that is under a core library and registered by no package is known to be wrong.
+                if libraries_found or library_name.split('.', maxsplit=1)[0] not in CORE_LIBRARIES:
+                    self.logger.debug(f'Skipping external import library: {library_name}')
+                    return
             if not libraries_found:
                 raise OSC2ParsingError(
                     msg=f'No import library "{library_name}" found.', context=ctx)
@@ -824,13 +826,12 @@ class ModelBuilder(OpenSCENARIO2Listener):  # pylint: disable=too-many-public-me
 
     # Enter a parse tree produced by OpenSCENARIO2Parser#riseExpression.
     def enterRiseExpression(self, ctx: OpenSCENARIO2Parser.RiseExpressionContext):
-        raise OSC2ParsingError(msg=f"rise expression not yet supported", context=ctx)
-        # self.__node_stack.append(self.__cur_node)
-        # node = RiseExpression()
-        # node.set_ctx(ctx, self.current_file)
+        self.__node_stack.append(self.__cur_node)
+        node = RiseExpression()
+        node.set_ctx(ctx, self.current_file)
 
-        # self.__cur_node.set_children(node)
-        # self.__cur_node = node
+        self.__cur_node.set_children(node)
+        self.__cur_node = node
 
     # Exit a parse tree produced by OpenSCENARIO2Parser#riseExpression.
     def exitRiseExpression(self, ctx: OpenSCENARIO2Parser.RiseExpressionContext):
@@ -838,13 +839,12 @@ class ModelBuilder(OpenSCENARIO2Listener):  # pylint: disable=too-many-public-me
 
     # Enter a parse tree produced by OpenSCENARIO2Parser#fallExpression.
     def enterFallExpression(self, ctx: OpenSCENARIO2Parser.FallExpressionContext):
-        raise OSC2ParsingError(msg=f"fall expression not yet supported", context=ctx)
-        # self.__node_stack.append(self.__cur_node)
-        # node = FallExpression()
-        # node.set_ctx(ctx, self.current_file)
+        self.__node_stack.append(self.__cur_node)
+        node = FallExpression()
+        node.set_ctx(ctx, self.current_file)
 
-        # self.__cur_node.set_children(node)
-        # self.__cur_node = node
+        self.__cur_node.set_children(node)
+        self.__cur_node = node
 
     # Exit a parse tree produced by OpenSCENARIO2Parser#fallExpression.
     def exitFallExpression(self, ctx: OpenSCENARIO2Parser.FallExpressionContext):
@@ -865,13 +865,12 @@ class ModelBuilder(OpenSCENARIO2Listener):  # pylint: disable=too-many-public-me
 
     # Enter a parse tree produced by OpenSCENARIO2Parser#everyExpression.
     def enterEveryExpression(self, ctx: OpenSCENARIO2Parser.EveryExpressionContext):
-        raise OSC2ParsingError(msg=f"every expression not yet supported", context=ctx)
-        # self.__node_stack.append(self.__cur_node)
-        # node = EveryExpression()
-        # node.set_ctx(ctx, self.current_file)
-
-        # self.__cur_node.set_children(node)
-        # self.__cur_node = node
+        # A periodic event is anchored to the start of the behavior that owns it, which a wait or
+        # an until does not know, and `on` -- where a period is what matters -- is not supported.
+        raise OSC2ParsingError(
+            msg="every() is not supported: use elapsed() for a single delay after the wait or "
+                "until starts.",
+            context=ctx)
 
     # Exit a parse tree produced by OpenSCENARIO2Parser#everyExpression.
     def exitEveryExpression(self, ctx: OpenSCENARIO2Parser.EveryExpressionContext):
