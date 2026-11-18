@@ -1,0 +1,3 @@
+import osc.types
+
+actor robot inherits osc_actor
