@@ -32,8 +32,15 @@ class OSC2Error(Exception):
         error_str = ""
         if self.osc_ctx is not None:
             if len(self.osc_ctx) == 4:
-                context = self.osc_ctx[2].replace('\n', '')
-                error_str = f"(line: {self.osc_ctx[0]}, column: {self.osc_ctx[1]} in '{self.osc_ctx[3]}') -> {context}: "
+                # A model written without source context carries no line, column, text or file.
+                line, column, text, filename = self.osc_ctx
+                location = f"line: {line}, column: {column}"
+                if filename is not None:
+                    location += f" in '{filename}'"
+                error_str = f"({location})"
+                if text is not None:
+                    error_str += f" -> {text.replace(chr(10), '')}"
+                error_str += ": "
             else:
                 error_str = f"<invalid context: {self.osc_ctx}>: "
         error_str += self.msg
