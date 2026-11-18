@@ -17,6 +17,7 @@
 
 from typing import List
 from scenario_execution.model.error import OSC2ParsingError
+import os
 import sys
 import py_trees
 import operator as op
@@ -74,6 +75,13 @@ def to_string(elem):
 
 
 def serialize(elem):
+    """A model element as a plain mapping, keyed by its type name.
+
+    Beside the constructor arguments and the children, the mapping carries the element's
+    source line, column, text and file under ``_ctx`` where it has them, so an element loaded
+    back with deserialize() names its source as the parsed one does. The file is kept by its
+    base name: its path is one on the host that wrote the model, not on the one that loads it.
+    """
     result = {}
     children = elem.get_children()
     if children:
@@ -89,6 +97,11 @@ def serialize(elem):
             result[type(elem).__name__]['_children'].append(serialize(child))
     else:
         result[type(elem).__name__] = {}
+    line, column, context, filename = elem.get_ctx()
+    if (line, column, context, filename) != (None, None, None, None):
+        result[type(elem).__name__]['_ctx'] = {
+            'line': line, 'column': column, 'context': context,
+            'filename': os.path.basename(filename) if filename else filename}
     return result
 
 
@@ -97,9 +110,12 @@ def deserialize(elem):
     result = getattr(types_module, 'CompilationUnit')()
     for current in elem:
         for key, value in current.items():
-            elem_attributes = {k: v for k, v in value.items() if k != '_children'}
+            elem_attributes = {k: v for k, v in value.items() if k not in ('_children', '_ctx')}
             module = getattr(types_module, key)
             inst = module(**elem_attributes)
+            if '_ctx' in value:
+                ctx = value['_ctx']
+                inst.set_source(ctx['line'], ctx['column'], ctx['context'], ctx.get('filename'))
             if '_children' in value:
                 children = deserialize(value['_children'])
                 for child_node in children.get_children():
@@ -237,6 +253,13 @@ class ModelElement(object):  # pylint: disable=too-many-public-methods
         self.__line = ctx.start.line
         self.__column = ctx.start.column
         self.__context = ctx.getText()
+        self.__filename = filename
+
+    def set_source(self, line, column, context, filename=None):
+        """Set the source line, column, text and file, as a deserialized model carries them."""
+        self.__line = line
+        self.__column = column
+        self.__context = context
         self.__filename = filename
 
     def get_ctx(self):
@@ -1634,7 +1657,7 @@ class FallExpression(ModelExpression):
 
     def enter_node(self, listener):
         if hasattr(listener, "enter_fall_expression"):
-            listener.enter_rise_expression(self)
+            listener.enter_fall_expression(self)
 
     def exit_node(self, listener):
         if hasattr(listener, "exit_fall_expression"):
@@ -1654,15 +1677,15 @@ class ElapsedExpression(ModelExpression):
 
     def enter_node(self, listener):
         if hasattr(listener, "enter_elapsed_expression"):
-            listener.enter_rise_expression(self)
+            listener.enter_elapsed_expression(self)
 
     def exit_node(self, listener):
         if hasattr(listener, "exit_elapsed_expression"):
-            listener.exit_fall_expression(self)
+            listener.exit_elapsed_expression(self)
 
     def accept(self, visitor):
         if hasattr(visitor, "visit_elapsed_expression"):
-            return visitor.visit_fall_expression(self)
+            return visitor.visit_elapsed_expression(self)
         else:
             return visitor.visit_children(self)
 
@@ -2399,6 +2422,24 @@ class Expression(object):
             return self.operator(left, right)
 
 
+def expression_operand(node, blackboard):
+    """What an Expression resolves on every evaluation for *node*.
+
+    A nested expression, a variable's reference or a function application is resolved when the
+    Expression is evaluated; anything else is a value fixed now.
+    """
+    if isinstance(node, (RelationExpression, BinaryExpression, LogicalExpression)):
+        return visit_expression(node, blackboard)
+    if isinstance(node, IdentifierReference):
+        var_def = node.get_variable_reference(blackboard)
+        if var_def is not None:
+            return var_def
+        return node.get_resolved_value(blackboard)
+    if isinstance(node, FunctionApplicationExpression):
+        return node
+    return node.get_resolved_value(blackboard)
+
+
 def visit_expression(node, blackboard):
     operator = None
     single_child = False
@@ -2440,19 +2481,7 @@ def visit_expression(node, blackboard):
     idx = 0
     args = [None, None]
     for child in node.get_children():
-        if isinstance(child, (RelationExpression, BinaryExpression, LogicalExpression)):
-            args[idx] = visit_expression(child, blackboard)
-        else:
-            if isinstance(child, IdentifierReference):
-                var_def = child.get_variable_reference(blackboard)
-                if var_def is not None:
-                    args[idx] = var_def
-                else:
-                    args[idx] = child.get_resolved_value(blackboard)
-            elif isinstance(child, FunctionApplicationExpression):
-                args[idx] = child
-            else:
-                args[idx] = child.get_resolved_value(blackboard)
+        args[idx] = expression_operand(child, blackboard)
         idx += 1
 
     if single_child:
