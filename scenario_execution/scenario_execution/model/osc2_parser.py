@@ -54,19 +54,31 @@ def _decode_error_message(file: str, err: UnicodeDecodeError) -> str:
             f"re-save it in that encoding.")
 
 
+#: Keys of a parameter document that are the runner's, not the scenario's: ``_output_dir``
+#: names where the scenario's results go, ``_reset`` carries arguments for the simulation's
+#: ``reset()``. Stripped before the document is applied as parameter overrides; any other
+#: underscore key is refused there as an unknown parameter, which is what makes a document
+#: written for a newer runner fail here rather than run with part of itself ignored.
+RESERVED_DOCUMENT_KEYS = ('_output_dir', '_reset')
+
+
 class OpenScenario2Parser(object):
     """ Helper class for parsing openscenario 2 files """
 
     def __init__(self, logger) -> None:
         self.logger = logger
+        # absolute path of every file parse_file read, entry file first, each once
         self.parsed_files = []
         self.scenario_params = {}
 
     def process_file(self, file, log_model: bool = False, debug: bool = False, scenario_parameter_file: str = None, create_scenario_parameter_file_template: bool = False):
         """ Convenience method to execute the parsing and print out tree.
 
-        Returns a list of (py_tree, params) tuples — one entry per (scenario × override
-        document).  If ``scenario_parameter_file`` contains a single YAML document (or is
+        Returns a list of ``(py_tree, params, output_dir, reset)`` tuples — one entry per
+        (scenario × override document): the scenario's resolved parameters, its document's
+        ``_output_dir`` (or ``None``) and its document's ``_reset`` mapping (empty when none),
+        the two keys a parameter document reserves for the runner (RESERVED_DOCUMENT_KEYS).
+        If ``scenario_parameter_file`` contains a single YAML document (or is
         absent) the list has one entry per ScenarioDeclaration and no name suffix is added.
         If the file contains multiple YAML documents (separated by ``---``) each document
         is treated as an independent set of overrides and scenario names are suffixed with
@@ -102,15 +114,20 @@ class OpenScenario2Parser(object):
             resolve_internal_model(base_model, _base_tree, self.logger, log_model)
 
         for doc_idx, override_doc in enumerate(override_docs):
-            # Extract and validate _output_dir entries from the override doc before
-            # forwarding the doc to apply_parameter_overrides (which would reject them
-            # as unknown parameter names).
+            # Extract and validate the runner's reserved keys (RESERVED_DOCUMENT_KEYS) from the
+            # override doc before forwarding the doc to apply_parameter_overrides, which
+            # rejects any name the scenario does not declare -- including, on purpose, a
+            # reserved key this parser does not know.
             override_output_dirs = {}  # scenario_name -> _output_dir string or None
+            override_resets = {}  # scenario_name -> the _reset mapping
             cleaned_override_doc = override_doc
             if override_doc is not None:
                 cleaned_override_doc = {}
                 for scenario_name, params in override_doc.items():
-                    if isinstance(params, dict) and '_output_dir' in params:
+                    if not isinstance(params, dict):
+                        cleaned_override_doc[scenario_name] = params
+                        continue
+                    if '_output_dir' in params:
                         scenario_output_dir = params['_output_dir']
                         if not isinstance(scenario_output_dir, str):
                             raise ValueError(
@@ -123,11 +140,16 @@ class OpenScenario2Parser(object):
                                     f"_output_dir for scenario '{scenario_name}' must not escape the "
                                     f"output directory: '{scenario_output_dir}'")
                         override_output_dirs[scenario_name] = scenario_output_dir
-                        cleaned_override_doc[scenario_name] = {
-                            k: v for k, v in params.items() if k != '_output_dir'
-                        }
-                    else:
-                        cleaned_override_doc[scenario_name] = params
+                    if '_reset' in params:
+                        reset = params['_reset']
+                        if not isinstance(reset, dict):
+                            raise ValueError(
+                                f"_reset for scenario '{scenario_name}' must be a mapping of reset() "
+                                f"argument names to values, got: {type(reset).__name__}")
+                        override_resets[scenario_name] = reset
+                    cleaned_override_doc[scenario_name] = {
+                        k: v for k, v in params.items() if k not in RESERVED_DOCUMENT_KEYS
+                    }
 
             if create_scenario_parameter_file_template:
                 # Template generation needs the full create_internal_model path
@@ -179,10 +201,11 @@ class OpenScenario2Parser(object):
                 if multi_doc:
                     py_tree.name = f"{py_tree.name}-{doc_idx}"
                 scenario_output_dir = override_output_dirs.get(scenario_decl.name)
-                results.append((py_tree, params, scenario_output_dir))
+                results.append((py_tree, params, scenario_output_dir,
+                                override_resets.get(scenario_decl.name, {})))
             model._ModelElement__children = all_children  # pylint: disable=protected-access
 
-        names = [tree.name for tree, _, __ in results]
+        names = [entry[0].name for entry in results]
         if len(names) != len(set(names)):
             duplicates = sorted({n for n in names if names.count(n) > 1})
             raise ValueError(
@@ -552,9 +575,10 @@ class OpenScenario2Parser(object):
 
     def parse_file(self, file: str, log_model: bool = False, error_prefix=""):
         """ Execute the parsing """
-        if file in self.parsed_files:  # skip already parsed/imported files
+        path = os.path.abspath(file)
+        if path in self.parsed_files:  # skip already parsed/imported files
             return None
-        self.parsed_files.append(file)
+        self.parsed_files.append(path)
         try:
             # UTF-8 explicitly: ANTLR's FileStream defaults to ASCII, and an .osc is source
             # text. A dash, a degree sign or an accented name -- in a comment, a string, or
